@@ -1,3 +1,6 @@
 [submodule "services/docker_oriented_rest_api_template"]
 	path = services/docker_oriented_rest_api_template
 	url = https://github.com/RechieKho/docker_oriented_rest_api_template.git
+[submodule "services/docker_oriented_page_template"]
+	path = services/docker_oriented_page_template
+	url = https://github.com/RechieKho/docker_oriented_page_template.git
