@@ -1,0 +1,18 @@
+{
+  "name": "docker_oriented_cluster_template",
+  "version": "1.0.0",
+  "description": "A docker-service cluster.",
+  "scripts": {
+    "compile": "tsc",
+    "serve": "npm run compile && node ./dist/scripts/serve.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "typescript": "^5.9.2"
+  },
+  "clusterDirectory": "./services"
+}
