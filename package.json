@@ -14,5 +14,8 @@
     "@types/node": "^24.2.0",
     "typescript": "^5.9.2"
   },
-  "clusterDirectory": "./services"
+  "clusterDirectory": "./services",
+  "excludedServices": [
+    "docker_oriented_*"
+  ]
 }
