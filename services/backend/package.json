@@ -1,0 +1,37 @@
+{
+  "name": "docker_oriented_rest_template",
+  "version": "1.0.0",
+  "description": "A simple RESTful API.",
+  "main": "index.js",
+  "scripts": {
+    "compile": "tsc",
+    "start": "node ./dist/index.js",
+    "serve": "npm run compile && node ./dist/scripts/serve.js",
+    "dev": "nodemon --exec 'npm run compile && npm run start'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.2.0",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0"
+  },
+  "containerPort": 8080,
+  "hostPort": 8080,
+  "nodemonConfig": {
+    "ignore": [
+      "node_modules",
+      "dist"
+    ],
+    "ext": "*.ts",
+    "delay": 1000
+  }
+}

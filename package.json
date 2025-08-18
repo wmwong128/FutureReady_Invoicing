@@ -1,7 +1,7 @@
 {
-  "name": "docker_oriented_cluster_template",
+  "name": "FutureReadyInvoicing",
   "version": "1.0.0",
-  "description": "A docker-service cluster.",
+  "description": "An Invoicing System.",
   "scripts": {
     "compile": "tsc",
     "serve": "npm run compile && node ./dist/scripts/serve.js"
