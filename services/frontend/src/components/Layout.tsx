@@ -56,7 +56,7 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
               </div>
               <div>
                 <h1 className="font-bold text-lg text-foreground">Finance Copilot</h1>
-                <p className="text-xs text-muted-foreground">AI Operations Assistant</p>
+                <p className="text-xs text-muted-foreground flex justify-start">AI Operations Assistant</p>
               </div>
             </div>
             <Button
