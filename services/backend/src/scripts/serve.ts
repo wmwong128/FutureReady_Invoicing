@@ -19,17 +19,26 @@ const isContainerExists =
     execSyncOptions
   ).length !== 0;
 
-if (isContainerExists)
-  execSync(
-    `docker container rm --force --volumes ${containerName}`,
-    execSyncOptions
-  );
+if (isContainerExists) {
+  execSync(`docker container rm --force --volumes ${containerName}`, {
+    ...execSyncOptions,
+    stdio: 'inherit',
+  });
+  execSync(`docker rmi --force ${imageTag}`, {
+    ...execSyncOptions,
+    stdio: 'inherit',
+  });
+}
 
 execSync(
   `docker build . -t ${imageTag} --build-arg CONTAINER_PORT=${containerPort}`,
   execSyncOptions
 );
+
 execSync(
   `docker run -d -p ${hostPort}:${containerPort} --name ${containerName} ${imageTag}`,
-  execSyncOptions
+  {
+    ...execSyncOptions,
+    stdio: 'inherit',
+  }
 );

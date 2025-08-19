@@ -5,9 +5,16 @@ import './App.css';
 import LoginButton from './components/Login';
 import LogoutButton from './components/Logout';
 import Profile from './components/Profile';
+import useMachine from './hooks/useMachine';
 
 function App() {
   const [count, setCount] = useState(0);
+  const backendMachine = useMachine({
+    url: import.meta.env.VITE_BACKEND_MAIN_URL,
+  });
+  const aiMachine = useMachine({
+    url: import.meta.env.VITE_AI_MAIN_URL,
+  });
 
   return (
     <>
@@ -35,6 +42,10 @@ function App() {
       <Profile></Profile>
       <LoginButton></LoginButton>
       <LogoutButton></LogoutButton>
+      <h2>Backend Service Data: </h2>
+      {backendMachine.data}
+      <h2>AI Service Data: </h2>
+      {aiMachine.data}
     </>
   );
 }
