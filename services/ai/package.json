@@ -7,6 +7,7 @@
     "compile": "tsc",
     "pyinstall": "npm run compile && node ./scripts.gen.local/pyinstall.js",
     "pydev": "npm run compile && node ./scripts.gen.local/pydev.js",
+    "pydev-noauth": "NOAUTH=1 npm run pydev",
     "pystart": "npm run compile && node ./scripts.gen.local/pystart.js",
     "serve": "npm run compile && node ./scripts.gen.local/serve.js"
   },
