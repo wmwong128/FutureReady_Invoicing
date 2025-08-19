@@ -6,6 +6,10 @@ import LoginButton from './components/Login';
 import LogoutButton from './components/Logout';
 import Profile from './components/Profile';
 import useMachine from './hooks/useMachine';
+import { useState } from "react";
+import viteLogo from '/vite.svg';
+import reactLogo from './assets/react.svg';
+
 
 function App() {
   const [count, setCount] = useState(0);
