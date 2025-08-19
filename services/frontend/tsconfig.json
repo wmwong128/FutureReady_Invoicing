@@ -6,6 +6,7 @@
     { "path": "./tsconfig.scripts.json" }
   ],
   "compilerOptions": {
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

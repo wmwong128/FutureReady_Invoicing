@@ -1,4 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";;
+import { Layout } from "./components/Layout";
+import { Dashboard } from "./components/Dashboard";
+import { InvoiceManagement } from "./components/InvoiceManagement";
+import { ClientManagement } from "./components/ClientManagement";
+import { InvoiceUpload } from "./components/InvoiceUpload";
 import Index from "./pages/Index.tsx";;
 import NotFound from "./pages/NotFound.tsx";;
 import './App.css';
@@ -7,12 +12,16 @@ import LogoutButton from './components/Logout';
 import Profile from './components/Profile';
 import useMachine from './hooks/useMachine';
 import { useState } from "react";
-import viteLogo from '/vite.svg';
-import reactLogo from './assets/react.svg';
+import { Toaster } from "@/components/ui/sonner";
+//import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+const queryClient = new QueryClient();
 
 function App() {
   const [count, setCount] = useState(0);
+  const [activeTab, setActiveTab] = useState("dashboard"); // Add state management for activeTab & setActiveTab variables
   const backendMachine = useMachine({
     url: import.meta.env.VITE_BACKEND_MAIN_URL,
   });
@@ -21,74 +30,36 @@ function App() {
   });
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+            {activeTab === "dashboard" && <Dashboard />}
+            {activeTab === "invoices" && <InvoiceManagement />}
+            {activeTab === "clients" && <ClientManagement />}
+            {activeTab === "upload" && <InvoiceUpload />}
+          </Layout>
+          
+          <div className="card">
+            <button onClick={() => setCount((count) => count + 1)}>
+              count is {count}
+            </button>
+          </div>
 
-      <Profile></Profile>
-      <LoginButton></LoginButton>
-      <LogoutButton></LogoutButton>
-      <h2>Backend Service Data: </h2>
-      {backendMachine.data}
-      <h2>AI Service Data: </h2>
-      {aiMachine.data}
-    
+          <Profile />
+          <LoginButton />
+          <LogoutButton />
 
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-
-    </>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
-
-
-// // import { Toaster } from "@/components/ui/toaster";
-// import { Toaster } from "@/components/ui/sonner";
-// import { TooltipProvider } from "@/components/ui/tooltip";
-// import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-// import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import Index from "./pages/Index.tsx";
-// import NotFound from "./pages/NotFound.tsx";
-
-// const queryClient = new QueryClient();
-
-// const App = () => (
-//   <QueryClientProvider client={queryClient}>
-//     <TooltipProvider>
-//       <Toaster />
-//       <Toaster />
-//       <BrowserRouter>
-//         <Routes>
-//           <Route path="/" element={<Index />} />
-//           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-//           <Route path="*" element={<NotFound />} />
-//         </Routes>
-//       </BrowserRouter>
-//     </TooltipProvider>
-//   </QueryClientProvider>
-// );
 
 export default App;
