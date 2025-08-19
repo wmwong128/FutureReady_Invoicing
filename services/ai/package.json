@@ -1,0 +1,26 @@
+{
+  "name": "docker_oriented_python_server",
+  "version": "1.0.0",
+  "description": "Docker-oriented python server.",
+  "main": "index.js",
+  "scripts": {
+    "compile": "tsc",
+    "pyinstall": "npm run compile && node ./scripts.gen.local/pyinstall.js",
+    "pydev": "npm run compile && node ./scripts.gen.local/pydev.js",
+    "pystart": "npm run compile && node ./scripts.gen.local/pystart.js",
+    "serve": "npm run compile && node ./scripts.gen.local/serve.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1"
+  },
+  "containerPort": 9090,
+  "hostPort": 9090
+}
