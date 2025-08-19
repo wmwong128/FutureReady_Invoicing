@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
+import { BrowserRouter, Routes, Route } from "react-router-dom";;
+import Index from "./pages/Index.tsx";;
+import NotFound from "./pages/NotFound.tsx";;
 import './App.css';
 import LoginButton from './components/Login';
 import LogoutButton from './components/Logout';
@@ -46,8 +46,45 @@ function App() {
       {backendMachine.data}
       <h2>AI Service Data: </h2>
       {aiMachine.data}
+    
+
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+
     </>
   );
 }
+
+
+// // import { Toaster } from "@/components/ui/toaster";
+// import { Toaster } from "@/components/ui/sonner";
+// import { TooltipProvider } from "@/components/ui/tooltip";
+// import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// import { BrowserRouter, Routes, Route } from "react-router-dom";
+// import Index from "./pages/Index.tsx";
+// import NotFound from "./pages/NotFound.tsx";
+
+// const queryClient = new QueryClient();
+
+// const App = () => (
+//   <QueryClientProvider client={queryClient}>
+//     <TooltipProvider>
+//       <Toaster />
+//       <Toaster />
+//       <BrowserRouter>
+//         <Routes>
+//           <Route path="/" element={<Index />} />
+//           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+//           <Route path="*" element={<NotFound />} />
+//         </Routes>
+//       </BrowserRouter>
+//     </TooltipProvider>
+//   </QueryClientProvider>
+// );
 
 export default App;
