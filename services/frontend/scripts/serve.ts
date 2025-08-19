@@ -1,14 +1,14 @@
-import metadata = require("./metadata");
-import ChildProcess = require("child_process");
+import metadata = require('./metadata');
+import ChildProcess = require('child_process');
 
 const { execSync } = ChildProcess;
 const { projectDirectory, packageData } = metadata;
 
-const imageTag = `${packageData["name"]}:latest`;
-const containerName = `${packageData["name"]}-container`;
-const hostPort = packageData["hostPort"] as number;
+const imageTag = `${packageData['name']}:latest`;
+const containerName = `${packageData['name']}-container`;
+const hostPort = packageData['hostPort'] as number;
 const execSyncOptions: ChildProcess.ExecSyncOptionsWithStringEncoding = {
-  encoding: "ascii",
+  encoding: 'ascii',
   cwd: projectDirectory,
 };
 
@@ -18,14 +18,22 @@ const isContainerExists =
     execSyncOptions
   ).length !== 0;
 
-if (isContainerExists)
-  execSync(
-    `docker container rm --force --volumes ${containerName}`,
-    execSyncOptions
-  );
+if (isContainerExists) {
+  execSync(`docker container rm --force --volumes ${containerName}`, {
+    ...execSyncOptions,
+    stdio: 'inherit',
+  });
+  execSync(`docker rmi --force ${imageTag}`, {
+    ...execSyncOptions,
+    stdio: 'inherit',
+  });
+}
 
 execSync(`docker build . -t ${imageTag}`, execSyncOptions);
 execSync(
   `docker run -d -p ${hostPort}:80 --name ${containerName} ${imageTag}`,
-  execSyncOptions
+  {
+    ...execSyncOptions,
+    stdio: 'inherit',
+  }
 );
