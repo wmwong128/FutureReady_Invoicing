@@ -8,6 +8,7 @@ const containerPort = metadata.packageData['containerPort'] as number;
 const hostPort = metadata.packageData['hostPort'] as number;
 const AUTH0_AUDIENCE = process.env['AUTH0_AUDIENCE'] as string;
 const AUTH0_ISSUER_BASE_URL = process.env['AUTH0_ISSUER_BASE_URL'] as string;
+const NOAUTH = (process.env['NOAUTH'] ?? '') === 'true';
 const app = express();
 
 const authOptions = {
@@ -27,7 +28,7 @@ const errorHandler: express.ErrorRequestHandler = (err, _req, res, _next) => {
   }
 };
 
-app.use(auth(authOptions));
+if (!NOAUTH) app.use(auth(authOptions));
 app.get('/', (_req, res) => {
   res.json('Hello world.');
 });
