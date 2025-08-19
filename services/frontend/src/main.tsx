@@ -1,10 +1,21 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Auth0Provider } from '@auth0/auth0-react';
+import './index.css';
+import App from './App.tsx';
 
-createRoot(document.getElementById('root')!).render(
+const root = createRoot(document.getElementById('root')!);
+
+root.render(
   <StrictMode>
-    <App />
-  </StrictMode>,
-)
+    <Auth0Provider
+      domain={import.meta.env.VITE_AUTH0_FRONTEND_DOMAIN}
+      clientId={import.meta.env.VITE_AUTH0_FRONTEND_CLIENT_ID}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+      }}
+    >
+      <App />
+    </Auth0Provider>
+  </StrictMode>
+);
