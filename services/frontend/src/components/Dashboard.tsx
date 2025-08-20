@@ -6,9 +6,7 @@ import {
     Calendar,
     Clock,
     HandCoins,
-    AlertTriangle,
 } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
 
 export const Dashboard = () => {
     // Mock data for the dashboard
@@ -18,11 +16,6 @@ export const Dashboard = () => {
         dso: { value: 28, change: -3, period: 'days' },
         debt: { value: 14000, change: -2.1, period: 'total debt' },
     };
-    const risk_levels = {
-        high: [ "TechCorp", "HappyMart" ],
-        medium: [ "Global Inc" ],
-        low: [ "StartupXYZ" ],
-    }
 
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
@@ -93,39 +86,6 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent>
                         {/* <ARAgingChart /> */}
-                    </CardContent>
-                </Card>
-
-                <Card className="col-start-1 md:col-end-3 lg:col-end-4">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-                        <CardTitle className="text-base font-medium">Risk Alerts</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-warning" />
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex items-start space-x-2">
-                            <Badge variant="destructive">High</Badge>
-                            <div className="flex flex-col">
-                                {risk_levels.high.map((item, index) => (
-                                    <span key={index} className="text-sm text-left">{item}</span>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                            <Badge variant="outline">Medium</Badge>
-                            <div className="flex flex-col">
-                                {risk_levels.medium.map((item, index) => (
-                                    <span key={index} className="text-sm text-left">{item}</span>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Badge variant="outline">Low</Badge>
-                            <div className="flex flex-col">
-                                {risk_levels.low.map((item, index) => (
-                                    <span key={index} className="text-sm text-left">{item}</span>
-                                ))}
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
             </div>
