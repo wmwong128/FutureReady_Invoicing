@@ -6,6 +6,7 @@ import {
   FileText, 
   Users, 
   Upload, 
+  //Settings, 
   Bell, 
   Search,
   Menu,
@@ -23,24 +24,12 @@ interface LayoutProps {
 export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-
-//to get the current page title
-  const getPageTitle = () => {
-    switch(activeTab) {
-      case 'dashboard': return 'Dashboard';
-      case 'invoices': return 'Invoice Management';
-      case 'clients': return 'Client Management';
-      case 'upload': return 'Invoice Upload';
-      default: return 'Finance Copilot';
-    }
-  };
-
-
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "invoices", name: "Invoices", icon: FileText },
     { id: "clients", name: "Clients", icon: Users },
     { id: "upload", name: "Upload", icon: Upload },
+   // { id: "settings", name: "Settings", icon: Settings },
   ];
 
   return (
@@ -69,7 +58,7 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
               </div>
               <div>
                 <h1 className="font-bold text-lg text-foreground">Finance Copilot</h1>
-                <p className="text-xs text-muted-foreground flex justify-start">AI Operations Assistant</p>
+                <p className="text-xs text-muted-foreground">AI Operations Assistant</p>
               </div>
             </div>
             <Button
@@ -123,43 +112,40 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
 
       {/* Main content */}
       <div className="lg:pl-64">
-
-
-
-{/********************************************************need correction */}
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-          <div className="flex items-center justify-between h-16 px-6">
-            <div className="flex items-center">
+        {/* Top bar - UPDATED SECTION */}
+        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border w-full">
+          <div className="flex items-center h-10 w-full">
+            {/* Hamburger menu on the absolute left */}
+            <div className="absolute left-0 pl-4">
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden mr-2"
+                className="lg:hidden"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              <h1 className="text-xl font-semibold text-foreground">
-                {getPageTitle()}
-              </h1>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center">
-                  3
-                </Badge>
-              </Button>
+            
+            {/* Spacer to center the content if needed */}
+            <div className="flex-1"></div>
+            
+            {/* Notification and search buttons on the absolute right */}
+            <div className="absolute right-0 pr-4">
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center">
+                    3
+                  </Badge>
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <Search className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </header>
-
-
-
 
         {/* Page content */}
         <main className="min-h-[calc(100vh-4rem)]">
