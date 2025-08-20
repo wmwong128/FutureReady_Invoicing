@@ -2,7 +2,6 @@ import express = require('express');
 import metadata = require('./metadata');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
 import cors = require('cors');
-import mailing = require('./mailing');
 
 const { auth } = expressOAuth2JWTBearer;
 
