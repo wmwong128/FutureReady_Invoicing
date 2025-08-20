@@ -9,7 +9,8 @@
     "daily": "node ./dist/index.daily.js",
     "serve": "npm run compile && node ./dist/scripts/serve.js",
     "dev": "nodemon --exec 'npm run compile && npm run start'",
-    "dev-noauth": "NOAUTH=true npm run dev"
+    "dev-noauth": "NOAUTH=true npm run dev",
+    "dev-daily": "npm run compile && npm run daily"
   },
   "keywords": [],
   "author": "",
