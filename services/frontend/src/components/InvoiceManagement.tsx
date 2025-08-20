@@ -5,9 +5,15 @@ import { DollarSign, Download, Edit, Eye, Filter, MoreHorizontal, Plus, Search, 
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useNavigate } from "react-router-dom";
 
 export const InvoiceManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
+    const navigate = useNavigate();
+
+    const handleNewInvoice = () => {
+        navigate("/new-invoice");
+    }
 
     // Mockup Data
     const stats = {
@@ -87,9 +93,9 @@ export const InvoiceManagement = () => {
     };
 
     const getRiskBadge = (score: number) => {
-        if (score >= 70) return <Badge variant="destructive">High ({score})</Badge>;
-        if (score >= 40) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Med ({score})</Badge>;
-        return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Low ({score})</Badge>;
+        if (score >= 70) return <Badge variant="destructive">High</Badge>;
+        if (score >= 40) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Med</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Low</Badge>;
     };
 
     const filteredInvoices = invoices.filter(invoice =>
@@ -109,7 +115,7 @@ export const InvoiceManagement = () => {
                         <Download className="mr-2 h-4 w-4" />
                         Export
                     </Button>
-                    <Button variant="default">
+                    <Button variant="default" onClick={handleNewInvoice}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Invoice
                     </Button>

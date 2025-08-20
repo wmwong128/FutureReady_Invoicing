@@ -13,6 +13,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,8 @@ interface LayoutProps {
 
 export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -82,6 +85,9 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
                     activeTab === item.id && "bg-primary text-primary-foreground shadow-md"
                   )}
                   onClick={() => {
+                    if (location.pathname !== "/") {
+                      navigate("/");
+                    }
                     onTabChange(item.id);
                     setSidebarOpen(false);
                   }}
