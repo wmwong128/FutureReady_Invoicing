@@ -7,13 +7,15 @@
     "compile": "tsc",
     "start": "node ./dist/index.js",
     "serve": "npm run compile && node ./dist/scripts/serve.js",
-    "dev": "nodemon --exec 'npm run compile && npm run start'"
+    "dev": "nodemon --exec 'npm run compile && npm run start'",
+    "dev-noauth": "NOAUTH=true npm run dev"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.0",
@@ -21,8 +23,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.2.1",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "express-oauth2-jwt-bearer": "^1.6.1"
   },
   "containerPort": 8080,
   "hostPort": 8080,

@@ -1,15 +1,15 @@
-import ChildProcess = require('child_process');
-import metadata = require('../metadata');
+import ChildProcess = require("child_process");
+import metadata = require("./metadata");
 
 const { execSync } = ChildProcess;
 const { packageData, projectDirectory } = metadata;
 
-const imageTag = `${packageData['name']}:latest`;
-const containerName = `${packageData['name']}-container`;
-const containerPort = packageData['containerPort'];
-const hostPort = packageData['hostPort'];
+const imageTag = `${packageData["name"]}:latest`;
+const containerName = `${packageData["name"]}-container`;
+const containerPort = packageData["containerPort"];
+const hostPort = packageData["hostPort"];
 const execSyncOptions: ChildProcess.ExecSyncOptionsWithStringEncoding = {
-  encoding: 'ascii',
+  encoding: "ascii",
   cwd: projectDirectory,
 };
 
@@ -22,11 +22,11 @@ const isContainerExists =
 if (isContainerExists) {
   execSync(`docker container rm --force --volumes ${containerName}`, {
     ...execSyncOptions,
-    stdio: 'inherit',
+    stdio: "inherit",
   });
   execSync(`docker rmi --force ${imageTag}`, {
     ...execSyncOptions,
-    stdio: 'inherit',
+    stdio: "inherit",
   });
 }
 
@@ -39,6 +39,6 @@ execSync(
   `docker run -d -p ${hostPort}:${containerPort} --name ${containerName} ${imageTag}`,
   {
     ...execSyncOptions,
-    stdio: 'inherit',
+    stdio: "inherit",
   }
 );

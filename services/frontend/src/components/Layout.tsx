@@ -26,6 +26,19 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+
+//to get the current page title
+  const getPageTitle = () => {
+    switch(activeTab) {
+      case 'dashboard': return 'Dashboard';
+      case 'invoices': return 'Invoice Management';
+      case 'clients': return 'Client Management';
+      case 'upload': return 'Invoice Upload';
+      default: return 'Finance Copilot';
+    }
+  };
+
+
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "invoices", name: "Invoices", icon: FileText },
@@ -116,31 +129,43 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
 
       {/* Main content */}
       <div className="lg:pl-64">
+
+
+
+{/********************************************************need correction */}
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-16 px-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden mr-2"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <h1 className="text-xl font-semibold text-foreground">
+                {getPageTitle()}
+              </h1>
+            </div>
 
-            <div className="flex items-center space-x-4 ml-auto">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs p-0 flex items-center justify-center">
                   3
                 </Badge>
               </Button>
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-              </Button>
             </div>
           </div>
         </header>
+
+
+
 
         {/* Page content */}
         <main className="min-h-[calc(100vh-4rem)]">
