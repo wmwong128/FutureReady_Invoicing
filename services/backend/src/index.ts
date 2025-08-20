@@ -2,15 +2,19 @@ import express = require('express');
 import metadata = require('./metadata');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
 import cors = require('cors');
+import mailing = require('./mailing');
 
 const { auth } = expressOAuth2JWTBearer;
+
 const name = metadata.packageData['name'] as string;
 const containerPort = metadata.packageData['containerPort'] as number;
 const hostPort = metadata.packageData['hostPort'] as number;
+
 const AUTH0_AUDIENCE = process.env['AUTH0_AUDIENCE'] as string;
 const AUTH0_ISSUER_BASE_URL = process.env['AUTH0_ISSUER_BASE_URL'] as string;
 const FRONTEND_MAIN_URL = process.env['FRONTEND_MAIN_URL'] as string;
 const NOAUTH = (process.env['NOAUTH'] ?? '') === 'true';
+
 const app = express();
 
 const authOptions = {
@@ -36,9 +40,11 @@ app.use(
   })
 );
 if (!NOAUTH) app.use(auth(authOptions));
+
 app.get('/', (_req, res) => {
   res.json('Hello world.');
 });
+
 app.use(errorHandler);
 
 app.listen(containerPort, () => {
