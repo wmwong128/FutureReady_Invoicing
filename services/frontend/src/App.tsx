@@ -1,12 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";;
-import { Layout } from "./components/Layout";
-import { Dashboard } from "./components/Dashboard";
-import { InvoiceManagement } from "./components/InvoiceManagement";
-import { ClientManagement } from "./components/ClientManagement";
-import { InvoiceUpload } from "./components/InvoiceUpload";
-import { InvoiceForm } from "./components/InvoiceForm.tsx";
 import Index from "./pages/Index.tsx";;
 import NotFound from "./pages/NotFound.tsx";;
+import { InvoiceForm } from "./components/InvoiceForm.tsx";
 import './App.css';
 import LoginButton from './components/Login';
 import LogoutButton from './components/Logout';
@@ -35,29 +30,28 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
-          <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-            {activeTab === "dashboard" && <Dashboard />}
-            {activeTab === "invoices" && <InvoiceManagement />}
-            {activeTab === "clients" && <ClientManagement />}
-            {activeTab === "upload" && <InvoiceUpload />}
-          </Layout>
-          
-          <div className="card">
-            <button onClick={() => setCount((count) => count + 1)}>
-              count is {count}
-            </button>
-          </div>
 
-          <Profile />
-          <LoginButton />
-          <LogoutButton />
-
-          <Routes>
+        <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/new-invoice" element={<Index overrideContent={<InvoiceForm/>} forceTab="invoices"/>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+            <Route path="*" element={<NotFound />} /> 
+        </Routes>
+        
+          
+      {/*    
+      <Profile></Profile>
+      <LoginButton></LoginButton>
+      <LogoutButton></LogoutButton>
+    
+      
+      <h2>Backend Service Data: </h2>
+      {backendMachine.data}
+      <h2>AI Service Data: </h2>
+      {aiMachine.data} */}
+
+
+
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
