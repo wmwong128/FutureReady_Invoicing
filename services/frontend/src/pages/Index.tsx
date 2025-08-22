@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Dashboard } from "@/components/Dashboard";
 import { InvoiceManagement } from "@/components/InvoiceManagement";
 import { ClientManagement } from "@/components/ClientManagement";
-import { InvoiceUpload } from "@/components/InvoiceUpload";
+import { InvoiceUpload } from "@/components/Email";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
