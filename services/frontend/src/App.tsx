@@ -1,10 +1,20 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import reactLogo from './assets/react.svg';
+import viteLogo from '/vite.svg';
+import './App.css';
+import LoginButton from './components/Login';
+import LogoutButton from './components/Logout';
+import Profile from './components/Profile';
+import useMachine from './hooks/useMachine';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+  const backendMachine = useMachine({
+    url: import.meta.env.VITE_BACKEND_MAIN_URL,
+  });
+  const aiMachine = useMachine({
+    url: import.meta.env.VITE_AI_MAIN_URL,
+  });
 
   return (
     <>
@@ -28,8 +38,16 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+
+      <Profile></Profile>
+      <LoginButton></LoginButton>
+      <LogoutButton></LogoutButton>
+      <h2>Backend Service Data: </h2>
+      {backendMachine.data}
+      <h2>AI Service Data: </h2>
+      {aiMachine.data}
     </>
-  )
+  );
 }
 
-export default App
+export default App;

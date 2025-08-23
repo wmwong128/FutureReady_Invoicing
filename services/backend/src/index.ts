@@ -10,6 +10,12 @@ const { auth } = expressOAuth2JWTBearer;
 const name = metadata.packageData['name'] as string;
 const containerPort = metadata.packageData['containerPort'] as number;
 const hostPort = metadata.packageData['hostPort'] as number;
+
+const AUTH0_AUDIENCE = process.env['AUTH0_AUDIENCE'] as string;
+const AUTH0_ISSUER_BASE_URL = process.env['AUTH0_ISSUER_BASE_URL'] as string;
+const FRONTEND_MAIN_URL = process.env['FRONTEND_MAIN_URL'] as string;
+const NOAUTH = (process.env['NOAUTH'] ?? '') === 'true';
+
 const app = express();
 const mongoose = require('mongoose');
 const { connectDB } = require("./models/database");
@@ -110,6 +116,8 @@ startServer();
 app.get('/', (_req, res) => {
   res.json('Dashboard');
 });
+
+app.use(errorHandler);
 
 app.listen(containerPort, () => {
   console.log(`${name} is listening on port ${hostPort}:${containerPort}`);
