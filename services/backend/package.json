@@ -7,7 +7,6 @@
     "compile": "tsc",
     "start": "node ./dist/index.js",
     "daily": "node ./dist/index.daily.js",
-    "daily": "node ./dist/index.daily.js",
     "serve": "npm run compile && node ./dist/scripts/serve.js",
     "dev": "nodemon --exec 'npm run compile && npm run start'",
     "dev1": "nodemon --watch src --exec \"tsc && node ./dist/index.js\"",
