@@ -23,11 +23,6 @@ const { Invoice, Customer, Order } = schemas;
 const { sendEmail } = mailing;
 const { calculateCustomerRisk, getRiskLevel } = require("./models/threshold");
 
-const AUTH0_AUDIENCE = process.env['AUTH0_AUDIENCE'] as string;
-const AUTH0_ISSUER_BASE_URL = process.env['AUTH0_ISSUER_BASE_URL'] as string;
-const FRONTEND_MAIN_URL = process.env['FRONTEND_MAIN_URL'] as string;
-const NOAUTH = (process.env['NOAUTH'] ?? '') === 'true';
-
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 // Middleware for db
