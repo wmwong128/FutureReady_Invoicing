@@ -7,7 +7,6 @@
     "compile": "tsc",
     "start": "node ./dist/index.js",
     "daily": "node ./dist/index.daily.js",
-    "daily": "node ./dist/index.daily.js",
     "serve": "npm run compile && node ./dist/scripts/serve.js",
     "dev": "nodemon --exec 'npm run compile && npm run start'",
     "dev1": "nodemon --watch src --exec \"tsc && node ./dist/index.js\"",
@@ -20,7 +19,6 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
     "@types/method-override": "^3.0.0",
@@ -31,7 +29,6 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "cors": "^2.8.5",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
