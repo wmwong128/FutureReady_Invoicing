@@ -25,11 +25,12 @@ export const Dashboard = () => {
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-start justify-start space-y-0 pb-2 text-left">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
                         Dashboard
                     </h1>
+                <p className="text-muted-foreground">Monitor your business financial health</p>
                 </div>
             </div>
 

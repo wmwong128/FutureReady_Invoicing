@@ -104,11 +104,9 @@ export const ClientManagement = () => {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col items-start">
           <h1 className="text-3xl font-bold tracking-tight">Client Management</h1>
           <p className="text-muted-foreground">Manage your client relationships and payment history</p>
-        </div>
       </div>
 
       {/* Stats Cards */}

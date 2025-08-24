@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Edit, Save } from "lucide-react";
 import { useState } from "react";
 
-export const InvoiceUpload = () => {
+export const Email = () => {
   const [uploadStep, setUploadStep] = useState<'upload' | 'extracted' | 'review'>('upload');
   const [extractedData, setExtractedData] = useState({
     invoiceNumber: "INV-2024-001",
@@ -45,25 +45,24 @@ export const InvoiceUpload = () => {
   if (uploadStep === 'upload') {
     return (
       <div className="space-y-6 p-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Email forwarding</h1>
-          <p className="text-muted-foreground">Forward emails for automated processing</p>
+        <div className="flex flex-col items-start">
+          <h1 className="text-3xl font-bold tracking-tight">Email Forwarding</h1>
+          <p className="text-muted-foreground">Forward emails automatically</p>
         </div>
 
         <div className="flex justify-center">
           {/* Email Forward */}
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle>Email Forwarding</CardTitle>
+              <CardTitle>Forward invoices to:</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-2">Forward invoices to:</p>
                 <code className="text-sm bg-background p-2 rounded border">
                   invoices@financecopilot.ai
                 </code>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                   Auto-processing enabled
                 </Badge>

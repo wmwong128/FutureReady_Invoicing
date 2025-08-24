@@ -8,7 +8,8 @@ import {
   Upload, 
   Menu,
   X,
-  DollarSign
+  DollarSign,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -28,7 +29,7 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "invoices", name: "Invoices", icon: FileText },
     { id: "clients", name: "Clients", icon: Users },
-    { id: "upload", name: "Upload", icon: Upload },
+    { id: "email", name: "Mail", icon: Mail },
    // { id: "settings", name: "Settings", icon: Settings },
   ];
 

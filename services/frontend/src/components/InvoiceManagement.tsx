@@ -128,10 +128,12 @@ export const InvoiceManagement = () => {
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start pb-2 text-left">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Invoice Management</h1>
+                    <p className="text-muted-foreground">Track your clients' invoice</p>
                 </div>
+                
                 <div className="flex items-center space-x-3">
                     <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" />
