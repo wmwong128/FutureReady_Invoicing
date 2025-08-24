@@ -7,6 +7,7 @@ import {
     Clock,
     HandCoins,
 } from 'lucide-react';
+import { Badge } from "./ui/badge";
 
 export const Dashboard = () => {
     // Mock data for the dashboard
@@ -16,6 +17,10 @@ export const Dashboard = () => {
         dso: { value: 28, change: -3, period: 'days' },
         debt: { value: 14000, change: -2.1, period: 'total debt' },
     };
+    const invoices_num = {
+        paid: 10,
+        unpaid: 11,
+    }
 
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
@@ -78,14 +83,25 @@ export const Dashboard = () => {
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-col justify-start space-y-0 pb-1 text-left">
-                        <CardTitle className="text-2xl">AR Aging Analysis</CardTitle>
+                    <CardHeader className="flex flex-col justify-start space-y-0 pb-1">
+                        <CardTitle className="text-2xl">Invoices</CardTitle>
                         <CardDescription>
-                            Outstanding invoices by age bucket
+                            Number of paid and unpaid invoices
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        {/* <ARAgingChart /> */}
+                    <CardContent className="space-y-3">
+                        <div className="flex items-start space-x-2">
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/20">Paid</Badge>
+                            <div className="flex flex-col">
+                                {invoices_num.paid} invoice(s)
+                            </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                            <Badge variant="destructive">Unpaid</Badge>
+                            <div className="flex flex-col">
+                                {invoices_num.unpaid} invoice(s)
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

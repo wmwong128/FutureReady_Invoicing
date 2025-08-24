@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Download, Edit, Eye, Filter, MoreHorizontal, Plus, Search, Send } from "lucide-react";
+import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -59,22 +59,46 @@ export const InvoiceManagement = () => {
             id: "INV-004",
             client: "Enterprise Ltd",
             amount: 15600,
-            status: "sent",
+            status: "paid",
             dueDate: "2024-02-15",
             issueDate: "2024-01-15",
             daysOverdue: 0,
             riskScore: 35
         },
+    ];
+    const drafting_invoices = [
         {
-            id: "INV-005",
-            client: "Innovation Corp",
-            amount: 9800,
-            status: "draft",
-            dueDate: "2024-02-20",
-            issueDate: "2024-01-20",
-            daysOverdue: 0,
-            riskScore: 28
-        }
+            id: "INV-001",
+            client: "TechCorp Solutions",
+            amount: 12500,
+            dueDate: "2024-01-15",
+            issueDate: "2023-12-15",
+            riskScore: 87
+        },
+        {
+            id: "INV-002",
+            client: "Global Industries",
+            amount: 8750,
+            dueDate: "2024-02-01",
+            issueDate: "2024-01-01",
+            riskScore: 42
+        },
+        {
+            id: "INV-003",
+            client: "StartupXYZ",
+            amount: 5200,
+            dueDate: "2024-01-20",
+            issueDate: "2023-12-20",
+            riskScore: 23
+        },
+        {
+            id: "INV-004",
+            client: "Enterprise Ltd",
+            amount: 15600,
+            dueDate: "2024-02-15",
+            issueDate: "2024-01-15",
+            riskScore: 35
+        },
     ];
 
     const getStatusBadge = (status: string, daysOverdue: number) => {
@@ -85,8 +109,6 @@ export const InvoiceManagement = () => {
                 return <Badge variant="destructive">Overdue ({daysOverdue}d)</Badge>;
             case "pending":
                 return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Pending</Badge>;
-            case "sent":
-                return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Sent</Badge>;
             default:
                 return <Badge variant="outline">Draft</Badge>;
         }
@@ -203,20 +225,78 @@ export const InvoiceManagement = () => {
                         <TableBody>
                             {filteredInvoices.map((invoice) => (
                                 <TableRow key={invoice.id} className="hover:bg-muted/50">
-                                    <TableCell className="font-medium">{invoice.id}</TableCell>
-                                    <TableCell>{invoice.client}</TableCell>
-                                    <TableCell className="font-medium">
+                                    <TableCell className="font-medium text-left">{invoice.id}</TableCell>
+                                    <TableCell className="text-left">{invoice.client}</TableCell>
+                                    <TableCell className="font-medium text-left">
                                         ${invoice.amount.toLocaleString()}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-left">
                                         {getStatusBadge(invoice.status, invoice.daysOverdue)}
                                     </TableCell>
-                                    <TableCell>
-                                        <div className={invoice.status === "overdue" ? "text-destructive" : ""}>
-                                            {invoice.dueDate}
+                                    <TableCell className="text-left">
+                                        {invoice.dueDate}
+                                    </TableCell>
+                                    <TableCell className="text-left">
+                                        {getRiskBadge(invoice.riskScore)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end space-x-1">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </TableCell>
-                                    <TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Invoice Drafts</CardTitle>
+                        <div className="flex items-center space-x-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search invoice drafts..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-9 w-64"
+                                />
+                            </div>
+                            <Button variant="outline" size="icon">
+                                <Filter className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Invoice ID</TableHead>
+                                <TableHead>Client</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Due Date</TableHead>
+                                <TableHead>Risk Score</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredInvoices.map((invoice) => (
+                                <TableRow key={invoice.id} className="hover:bg-muted/50">
+                                    <TableCell className="font-medium text-left">{invoice.id}</TableCell>
+                                    <TableCell className="text-left">{invoice.client}</TableCell>
+                                    <TableCell className="font-medium text-left">
+                                        ${invoice.amount.toLocaleString()}
+                                    </TableCell>
+                                    <TableCell className="text-left">
+                                        {invoice.dueDate}
+                                    </TableCell>
+                                    <TableCell className="text-left">
                                         {getRiskBadge(invoice.riskScore)}
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -229,9 +309,6 @@ export const InvoiceManagement = () => {
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
                                                 <Send className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>
