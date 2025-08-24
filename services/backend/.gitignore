@@ -6,3 +6,7 @@ node_modules/
 dist
 
 **/*.local
+
+docker-compose.yml
+
+Dockerfile.dev
