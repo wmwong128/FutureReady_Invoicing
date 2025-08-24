@@ -4,6 +4,7 @@ import schemas = require('./models/dbScheme');
 import mailing = require('./mailing');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
 import cors = require('cors');
+import cors = require('cors');
 
 const { auth } = expressOAuth2JWTBearer;
 
