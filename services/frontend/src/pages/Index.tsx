@@ -5,10 +5,11 @@ import { InvoiceManagement } from "@/components/InvoiceManagement";
 import { ClientManagement } from "@/components/ClientManagement";
 import { InvoiceUpload } from "@/components/Email";
 
-const Index = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+const Index = ({ overrideContent, forceTab }: {overrideContent?: React.ReactNode, forceTab?: string}) => {
+  const [activeTab, setActiveTab] = useState(forceTab?? "dashboard");
 
   const renderContent = () => {
+    if (overrideContent) return overrideContent
     switch (activeTab) {
       case "dashboard":
         return <Dashboard />;

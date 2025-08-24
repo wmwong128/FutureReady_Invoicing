@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";;
 import Index from "./pages/Index.tsx";;
 import NotFound from "./pages/NotFound.tsx";;
+import { InvoiceForm } from "./components/InvoiceForm.tsx";
 import './App.css';
 import LoginButton from './components/Login';
 import LogoutButton from './components/Logout';
@@ -32,6 +33,7 @@ function App() {
 
         <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/new-invoice" element={<Index overrideContent={<InvoiceForm/>} forceTab="invoices"/>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} /> 
         </Routes>
