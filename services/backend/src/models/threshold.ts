@@ -1,4 +1,3 @@
-import type { MongooseError } from "mongoose";
 import mongoose = require("mongoose");
 import schemas = require("./dbScheme");
 

@@ -483,67 +483,67 @@ app.patch("/invoice/:id", async (req, res) => {
 
     let updatedOrder = null;
 
-    if (orderUpdateData && Object.keys(orderUpdateData).length > 0) {
-      // If request contains orderlines, handle them separately
-      if (orderUpdateData.orderlines) {
-        for (const line of orderUpdateData.orderlines) {
-          const setObj: { [key: string]: any } = {};
-          if (line.quantityordered !== undefined) setObj["orderlines.$.quantityordered"] = line.quantityordered;
-          if (line.priceeach !== undefined) setObj["orderlines.$.priceeach"] = line.priceeach;
-          if (line.sales !== undefined) setObj["orderlines.$.sales"] = line.sales;
-          if (line.msrp !== undefined) setObj["orderlines.$.msrp"] = line.msrp;
+    if (orderUpdateData.orderlines) {
+      for (const line of orderUpdateData.orderlines) {
+        const setObj: { [key: string]: any } = {};
+        if (line.quantityordered !== undefined) setObj["orderlines.$.quantityordered"] = line.quantityordered;
+        if (line.priceeach !== undefined) setObj["orderlines.$.priceeach"] = line.priceeach;
+        if (line.sales !== undefined) setObj["orderlines.$.sales"] = line.sales;
+        if (line.msrp !== undefined) setObj["orderlines.$.msrp"] = line.msrp;
+        if (line.productline !== undefined) setObj["orderlines.$.productline"] = line.productline;
+        if (line.productcode !== undefined) setObj["orderlines.$.productcode"] = line.productcode;
 
-          const orderLineUpdate = await Order.updateOne(
-            { _id: order._id, "orderlines.orderlinenumber": line.orderlinenumber },
-            { $set: setObj },
-            { session }
-          );
+        const orderLineUpdate = await Order.updateOne(
+          { _id: order._id, "orderlines.orderlinenumber": line.orderlinenumber },
+          { $set: setObj },
+          { session }
+        );
 
-          const refreshedOrder = await Order.findById(order._id).session(session);
-          if (!refreshedOrder) {
-            throw new Error("Failed to refresh order after line update");
-          }
-
-          let subtotal = 0;
-          refreshedOrder.orderlines.forEach((line: any) => {
-            subtotal += line.priceeach * line.quantityordered;
-          });
-
-          invoiceUpdateData.subtotal = subtotal;
-          invoiceUpdateData.taxamount = (subtotal * (invoiceUpdateData.taxrate || 0)) / 100;
-          invoiceUpdateData.totalamount = subtotal + invoiceUpdateData.taxamount;
-
-          await Invoice.findByIdAndUpdate(
-            invoiceId,
-            { $set: invoiceUpdateData },
-            { new: true, runValidators: true, session }
-          );
-
-          const riskScore = await calculateCustomerRisk(customer.customerid);
-          const riskLevel = getRiskLevel(riskScore);
-
-          const oldAmount = Number(existingInvoice.totalamount || 0);
-          const newAmount = Number(invoiceUpdateData.totalamount || 0);
-          const delta = newAmount - oldAmount;
-
-          await Customer.findOneAndUpdate(
-            { customerid: customer.customerid },
-            {
-              $inc: {
-                totalrevenue: delta,
-                totaloutstanding: delta
-              },
-              $set: { dangerlevel: riskLevel }
-            },
-            { new: true, session }
-          );
-          
-          if (orderLineUpdate.matchedCount === 0) {
-            throw new Error(`Order line ${line.orderlinenumber} not found`);
-          }
+        if (orderLineUpdate.matchedCount === 0) {
+          throw new Error(`Order line ${line.orderlinenumber} not found`);
         }
-        delete orderUpdateData.orderlines; 
       }
+
+      const refreshedOrder = await Order.findById(order._id).session(session);
+      if (!refreshedOrder) {
+        throw new Error("Failed to refresh order after updates");
+      }
+
+      let subtotal = 0;
+      refreshedOrder.orderlines.forEach((line: any) => {
+        subtotal += line.priceeach * line.quantityordered;
+      });
+
+      invoiceUpdateData.subtotal = subtotal;
+      invoiceUpdateData.taxamount = (subtotal * (invoiceUpdateData.taxrate || 0)) / 100;
+      invoiceUpdateData.totalamount = subtotal + invoiceUpdateData.taxamount;
+
+      await Invoice.findByIdAndUpdate(
+        invoiceId,
+        { $set: invoiceUpdateData },
+        { new: true, runValidators: true, session }
+      );
+
+      const riskScore = await calculateCustomerRisk(customer.customerid);
+      const riskLevel = getRiskLevel(riskScore);
+
+      const oldAmount = Number(existingInvoice.totalamount || 0);
+      const newAmount = Number(invoiceUpdateData.totalamount || 0);
+      const delta = newAmount - oldAmount;
+
+      await Customer.findOneAndUpdate(
+        { customerid: customer.customerid },
+        {
+          $inc: {
+            totalrevenue: delta,
+            totaloutstanding: delta
+          },
+          $set: { dangerlevel: riskLevel }
+        },
+        { new: true, session }
+      );
+
+      delete orderUpdateData.orderlines;
 
       if (Object.keys(orderUpdateData).length > 0) {
         updatedOrder = await Order.findByIdAndUpdate(
