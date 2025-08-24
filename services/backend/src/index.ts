@@ -108,8 +108,90 @@ async function startServer() {
 
 startServer();
 
-app.get('/', (_req, res) => {
-  res.json('Dashboard');
+app.get('/', async (_req, res) => {
+  try{
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(now.getDate() - 60);
+
+    const invoices = await Invoice.find({});
+
+    let monthlyrevenue = 0;
+    let lastmonthrevenue = 0;
+    let aroutstanding = 0;
+    let dayssalesoutstanding = 0;
+    let totalpaid = 0;
+    let totalunpaid = 0;
+    let totaloverdue = 0;
+    let percentagerevenue = 0;
+    let debt = 0;
+
+    const revenueTrend: { month: string; actual: number }[] = [];
+
+    for (const inv of invoices) {
+      if (inv.status === "PAID") {
+        if (inv.invoicedate >= thirtyDaysAgo && inv.invoicedate <= now) {
+          monthlyrevenue += inv.totalamount ?? 0;
+        }
+        if (inv.invoicedate >= sixtyDaysAgo && inv.invoicedate <= thirtyDaysAgo) {
+          lastmonthrevenue += inv.totalamount ?? 0;
+        }
+        const percentagerevenue = lastmonthrevenue > 0 ? ((monthlyrevenue - lastmonthrevenue) / lastmonthrevenue) * 100 : 0;
+        
+        if (inv.invoicedate) {
+          const date = new Date(inv.invoicedate);
+          const monthKey = date.toLocaleString("default", { month: "short" });
+          let monthEntry = revenueTrend.find((item) => item.month === monthKey);
+
+          if (monthEntry) {
+            monthEntry.actual += inv.totalamount ?? 0;
+          } else {
+            revenueTrend.push({ month: monthKey, actual: inv.totalamount ?? 0 });
+          }
+        }
+
+        totalpaid++;
+      }
+
+      if (inv.status === "PENDING") {
+        aroutstanding += inv.totalamount ?? 0;
+        dayssalesoutstanding += inv.payday ?? 0;
+        totalunpaid++;
+      }
+
+      if (inv.status === "OVERDUE") {
+        debt += inv.totalamount ?? 0;
+        totaloverdue++;
+      }
+    }
+
+    const monthlyRevenueBoard = {monthlyrevenue, percentagerevenue};
+    const invoiceStatusList = {totaloverdue, totalunpaid, totalpaid};
+
+    if (totalunpaid > 0) {
+      dayssalesoutstanding = Math.round(dayssalesoutstanding / totalunpaid);
+    } else {
+      dayssalesoutstanding = 0;
+    }
+
+    const dashboard = { 
+      mrr: monthlyRevenueBoard, 
+      arAging: aroutstanding, 
+      dso: dayssalesoutstanding, 
+      debt: debt, 
+      invoiceStatusList: invoiceStatusList,
+      revenuetrend: revenueTrend
+    };
+
+    res.json(dashboard);
+
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong", details: err });
+  }
 });
 
 app.use(errorHandler);
