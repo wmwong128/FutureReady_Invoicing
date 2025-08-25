@@ -41,6 +41,7 @@ enum PaymentMethod {
 interface IInvoice extends Document {
   invoicenumber: string;
   stripeinvoiceid?: string;
+  issueremail: string;
   ordernumber: number; 
   invoicedate: Date;
   duedate: Date;
@@ -51,7 +52,7 @@ interface IInvoice extends Document {
   totalamount?: number;
   paymentmethod?: PaymentMethod;
   paymentdate?: Date;
-  payday?: number
+  payday?: number;
   notes?: string;
 }
 
@@ -320,6 +321,10 @@ const invoicesSchema = new Schema<IInvoice>(
       required: false,
       unique: true,
       default: null
+    },
+    issueremail: {
+      type: String,
+      required: true,
     },
     ordernumber: {
       type: Number,
