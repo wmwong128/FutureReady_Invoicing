@@ -54,7 +54,7 @@ async function calculateCustomerRisk(customerId: string): Promise<number> {
 }
 
 /**
- * Get risk level (low, medium, high)
+ * Get risk level (normal, high)
  */
 function getRiskLevel(score: number): "NORMAL" | "HIGH" {
   if (score < 0.6) return "NORMAL";
