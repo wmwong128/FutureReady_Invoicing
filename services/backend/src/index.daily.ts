@@ -1,5 +1,4 @@
 import metadata = require('./metadata');
-import type { MongooseError } from "mongoose";
 import schemas = require('./models/dbScheme');
 import mailing = require('./mailing');
 
@@ -7,7 +6,6 @@ const mongoose = require('mongoose');
 const { connectDB } = require("./models/database");
 const { Invoice, Customer, Order, InvoiceStatus } = schemas;
 const { sendEmail } = mailing;
-const { calculateCustomerRisk, getRiskLevel } = require("./models/threshold");
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
@@ -40,7 +38,7 @@ const updateInvoiceStatus = async (): Promise<void> => {
       }
     );
 
-    // 3. Customer follow-up
+    // 2. Customer follow-up
     const invoiceFollowUp = await Invoice.find({ status: "PENDING" });
 
     for (const invoice of invoiceFollowUp) {
@@ -131,7 +129,7 @@ const updateInvoiceStatus = async (): Promise<void> => {
       }
     };
 
-    // 4. Client due email
+    // 3. Client due email
     const invoiceOverdue = await Invoice.find({ 
       status: "PENDING",
       // duedate: { $lt: currentDate }, 
@@ -178,7 +176,7 @@ const updateInvoiceStatus = async (): Promise<void> => {
       };
     };
 
-    // 2. Update status to OVERDUE for invoices past due date
+    // 4. Update status to OVERDUE for invoices past due date
     const overdueUpdateResult = await Invoice.updateMany(
       {
         // duedate: { $lt: currentDate }, 
