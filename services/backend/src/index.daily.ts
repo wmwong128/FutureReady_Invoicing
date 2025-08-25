@@ -213,3 +213,6 @@ const runDailyUpdate = async (): Promise<void> => {
 
 // Run the update
 runDailyUpdate();
+
+const name = metadata.packageData['name'] as string;
+console.log(`Daily routine of ${name} executed.`);
