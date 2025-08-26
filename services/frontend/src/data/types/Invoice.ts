@@ -1,3 +1,5 @@
+import type { Customer } from "./Customer";
+
 export interface Invoice {
     _id: string;
     invoicenumber: string;
@@ -21,4 +23,35 @@ export interface InvoiceStats {
 export interface InvoiceReponse extends InvoiceStats {
     invoices: Invoice[];
     draftInvoices: Invoice[];
+}
+
+export interface InvoiceDetailsResponse {
+    invoice: Invoice;
+    order: Order;
+    customer: Customer;
+}
+
+export interface Order {
+    _id?: string;
+    ordernumber?: number;
+    orderdate?: string;
+    status?: string;
+    qtr_id?: number;
+    month_id?: number;
+    year_id?: number;
+    customerid?: string;
+    dealsize?: string;
+    orderlines?: OrderLine[];
+    updatedAt?: string;
+}
+
+export interface OrderLine {
+    _id?: string;
+    orderlinenumber?: number;
+    productcode?: string;
+    productline?: string;
+    quantityordered?: number;
+    priceeach?: number;
+    sales?: number;
+    msrp?: number;
 }

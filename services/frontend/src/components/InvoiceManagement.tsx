@@ -15,10 +15,6 @@ export const InvoiceManagement = () => {
     const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    const handleNewInvoice = () => {
-        navigate("/new-invoice");
-    }
-
     const { stats, invoices, draftInvoices } = useInvoiceManagement();
     const { viewInvoicePDF } = useInvoiceStripeView();
 
@@ -43,11 +39,11 @@ export const InvoiceManagement = () => {
 
     const filteredInvoices = invoices?.filter(invoice =>
         // invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.invoicenumber.toLowerCase().includes(searchTerm.toLowerCase())
+        invoice?.invoicenumber?.toLowerCase().includes(searchTerm.toLowerCase())
     ) ?? [];
     const filteredDraftInvoices = draftInvoices?.filter(invoice => 
         // invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.invoicenumber.toLowerCase().includes(searchTermDraft.toLowerCase())
+        invoice?.invoicenumber?.toLowerCase().includes(searchTermDraft.toLowerCase())
     ) ?? [];
 
     const handleInvoiceView = (id: string) => {
@@ -69,7 +65,7 @@ export const InvoiceManagement = () => {
                         <Download className="mr-2 h-4 w-4" />
                         Export
                     </Button>
-                    <Button variant="default" onClick={handleNewInvoice}>
+                    <Button variant="default" onClick={() => navigate("/new-invoice")}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Invoice
                     </Button>
@@ -238,7 +234,7 @@ export const InvoiceManagement = () => {
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleInvoiceView(invoice._id)}>
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/edit`)}>
                                                 <Edit className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">

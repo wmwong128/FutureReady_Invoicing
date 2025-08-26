@@ -15,30 +15,31 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import type { Client } from "./InvoiceForm";
+import type { Customer } from "@/data/types/Customer";
 
 interface ClientComboboxProps {
-    selectedClient: Client | null;
-    onClientSelect: (client: Client | null) => void;
+    selectedClient: Customer | null;
+    onClientSelect: (client: Customer | null) => void;
+    disabled?: boolean;
 }
 
 // Mock API call - replace with real API
-const fetchClients = async (): Promise<Client[]> => {
+const fetchClients = async (): Promise<Customer[]> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 300));
 
     return [
-        { id: "1", name: "Acme Corporation", email: "billing@acme.com" },
-        { id: "2", name: "TechStart Inc", email: "accounts@techstart.com" },
-        { id: "3", name: "Global Solutions Ltd", email: "finance@globalsolutions.com" },
-        { id: "4", name: "Innovative Designs", email: "admin@innovativedesigns.com" },
-        { id: "5", name: "Future Systems", email: "billing@futuresystems.com" },
+        { _id: "1", name: "Acme Corporation", email: "billing@acme.com" },
+        { _id: "2", name: "TechStart Inc", email: "accounts@techstart.com" },
+        { _id: "3", name: "Global Solutions Ltd", email: "finance@globalsolutions.com" },
+        { _id: "4", name: "Innovative Designs", email: "admin@innovativedesigns.com" },
+        { _id: "5", name: "Future Systems", email: "billing@futuresystems.com" },
     ];
 };
 
-export const ClientCombobox = ({ selectedClient, onClientSelect }: ClientComboboxProps) => {
+export const ClientCombobox = ({ selectedClient, onClientSelect, disabled = false }: ClientComboboxProps) => {
     const [open, setOpen] = useState(false);
-    const [clients, setClients] = useState<Client[]>([]);
+    const [clients, setClients] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -58,13 +59,14 @@ export const ClientCombobox = ({ selectedClient, onClientSelect }: ClientCombobo
     }, []);
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={disabled? undefined: setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
                     className="w-full justify-between"
+                    disabled={disabled}
                 >
                     {selectedClient ? (
                         <div className="flex flex-col items-start">
@@ -87,17 +89,17 @@ export const ClientCombobox = ({ selectedClient, onClientSelect }: ClientCombobo
                         <CommandGroup>
                             {clients.map((client) => (
                                 <CommandItem
-                                    key={client.id}
+                                    key={client._id}
                                     value={client.name}
                                     onSelect={() => {
-                                        onClientSelect(selectedClient?.id === client.id ? null : client);
+                                        onClientSelect(selectedClient?._id === client._id ? null : client);
                                         setOpen(false);
                                     }}
                                 >
                                     <Check
                                         className={cn(
                                             "mr-2 h-4 w-4",
-                                            selectedClient?.id === client.id ? "opacity-100" : "opacity-0"
+                                            selectedClient?._id === client._id ? "opacity-100" : "opacity-0"
                                         )}
                                     />
                                     <div className="flex flex-col">

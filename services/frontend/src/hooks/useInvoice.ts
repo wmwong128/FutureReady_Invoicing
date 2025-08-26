@@ -1,7 +1,6 @@
-import type { Invoice, InvoiceReponse, InvoiceStats } from "@/data/types/Invoice";
+import type { Invoice, InvoiceDetailsResponse, InvoiceReponse, InvoiceStats } from "@/data/types/Invoice";
 import useMachine from "./useMachine";
 import { useCallback } from "react";
-
 export function useInvoiceManagement() {
     const query = useMachine({
         url: `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice`,
@@ -17,6 +16,19 @@ export function useInvoiceManagement() {
         invoices,
         draftInvoices,
     }
+}
+
+export function useInvoice(id?: string) {
+    const query = useMachine({
+        url: id ? `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice/${id}` : "",
+        queryOptions: {
+            queryKey: ["invoice", id],
+            enabled: !!id,
+        },
+    });
+
+    const invoiceDetails: InvoiceDetailsResponse = query.data as InvoiceDetailsResponse
+    return { invoiceDetails };
 }
 
 export function useInvoiceStripeView() {
