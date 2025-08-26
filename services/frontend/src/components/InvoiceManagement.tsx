@@ -1,129 +1,59 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send } from "lucide-react";
+import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
+import { formatDate } from "@/lib/utils";
+import { useInvoiceManagement, useInvoiceStripeView } from "@/hooks/useInvoice";
 
 export const InvoiceManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
+    const [searchTermDraft, setSearchTermDraft] = useState("");
+    const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const handleNewInvoice = () => {
         navigate("/new-invoice");
     }
 
-    // Mockup Data
-    const stats = {
-        total_outstanding: 51850,
-        active_invoice: 4,
-        total_overdue_amount: 12500,
-        overdue_invoice: 1,
-        m_paid_invoice_amount: 5200,
-        m_paid_invoice: 1,
-    }
-    const invoices = [
-        {
-            id: "INV-001",
-            client: "TechCorp Solutions",
-            amount: 12500,
-            status: "overdue",
-            dueDate: "2024-01-15",
-            issueDate: "2023-12-15",
-            daysOverdue: 12,
-            riskScore: 87
-        },
-        {
-            id: "INV-002",
-            client: "Global Industries",
-            amount: 8750,
-            status: "pending",
-            dueDate: "2024-02-01",
-            issueDate: "2024-01-01",
-            daysOverdue: 0,
-            riskScore: 42
-        },
-        {
-            id: "INV-003",
-            client: "StartupXYZ",
-            amount: 5200,
-            status: "paid",
-            dueDate: "2024-01-20",
-            issueDate: "2023-12-20",
-            daysOverdue: 0,
-            riskScore: 23
-        },
-        {
-            id: "INV-004",
-            client: "Enterprise Ltd",
-            amount: 15600,
-            status: "paid",
-            dueDate: "2024-02-15",
-            issueDate: "2024-01-15",
-            daysOverdue: 0,
-            riskScore: 35
-        },
-    ];
-    const drafting_invoices = [
-        {
-            id: "INV-001",
-            client: "TechCorp Solutions",
-            amount: 12500,
-            dueDate: "2024-01-15",
-            issueDate: "2023-12-15",
-            riskScore: 87
-        },
-        {
-            id: "INV-002",
-            client: "Global Industries",
-            amount: 8750,
-            dueDate: "2024-02-01",
-            issueDate: "2024-01-01",
-            riskScore: 42
-        },
-        {
-            id: "INV-003",
-            client: "StartupXYZ",
-            amount: 5200,
-            dueDate: "2024-01-20",
-            issueDate: "2023-12-20",
-            riskScore: 23
-        },
-        {
-            id: "INV-004",
-            client: "Enterprise Ltd",
-            amount: 15600,
-            dueDate: "2024-02-15",
-            issueDate: "2024-01-15",
-            riskScore: 35
-        },
-    ];
+    const { stats, invoices, draftInvoices } = useInvoiceManagement();
+    const { viewInvoicePDF } = useInvoiceStripeView();
 
-    const getStatusBadge = (status: string, daysOverdue: number) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
-            case "paid":
+            case "PAID":
                 return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Paid</Badge>;
-            case "overdue":
-                return <Badge variant="destructive">Overdue ({daysOverdue}d)</Badge>;
-            case "pending":
+            case "OVERDUE":
+                return <Badge variant="destructive">Overdue</Badge>;
+            case "PENDING":
                 return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Pending</Badge>;
             default:
                 return <Badge variant="outline">Draft</Badge>;
         }
     };
 
-    const getRiskBadge = (score: number) => {
-        if (score >= 70) return <Badge variant="destructive">High</Badge>;
-        if (score >= 40) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Med</Badge>;
-        return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Low</Badge>;
-    };
+    // const getRiskBadge = (score: number) => {
+    //     if (score >= 70) return <Badge variant="destructive">High</Badge>;
+    //     if (score >= 40) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Med</Badge>;
+    //     return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Low</Badge>;
+    // };
 
-    const filteredInvoices = invoices.filter(invoice =>
-        invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredInvoices = invoices?.filter(invoice =>
+        // invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.invoicenumber.toLowerCase().includes(searchTerm.toLowerCase())
+    ) ?? [];
+    const filteredDraftInvoices = draftInvoices?.filter(invoice => 
+        // invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.invoicenumber.toLowerCase().includes(searchTermDraft.toLowerCase())
+    ) ?? [];
+
+    const handleInvoiceView = (id: string) => {
+        setViewInvoiceId(id);
+        console.log(viewInvoiceId);
+    }
 
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
@@ -133,7 +63,7 @@ export const InvoiceManagement = () => {
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Invoice Management</h1>
                     <p className="text-muted-foreground">Track your clients' invoice</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                     <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" />
@@ -154,8 +84,8 @@ export const InvoiceManagement = () => {
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm font-medium text-muted-foreground">Total Outstanding</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats.total_outstanding.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Across {stats.active_invoice} invoice(s)</p>
+                        <div className="text-2xl font-bold">${stats?.totalOutstanding?.toLocaleString() ?? 0}</div>
+                        <p className="text-xs text-muted-foreground">Across {stats?.countOutstanding} invoice(s)</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -164,8 +94,8 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-destructive rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">Overdue</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats.total_overdue_amount.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">{stats.overdue_invoice} invoice(s)</p>
+                        <div className="text-2xl font-bold">${stats?.totalOverdue?.toLocaleString() ?? 0}</div>
+                        <p className="text-xs text-muted-foreground">{stats?.countOverdue} invoice(s)</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -174,8 +104,7 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-success rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">This Month</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats.m_paid_invoice_amount.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">{stats.m_paid_invoice} invoice(s) paid</p>
+                        <div className="text-2xl font-bold">${stats?.thisMonthPaid?.toLocaleString() ?? 0}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -184,8 +113,7 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-warning rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">Avg DSO</span>
                         </div>
-                        <div className="text-2xl font-bold">28 days</div>
-                        <p className="text-xs text-muted-foreground">-3 vs last month</p>
+                        <div className="text-2xl font-bold">{stats?.averageDSO} days</div>
                     </CardContent>
                 </Card>
             </div>
@@ -226,24 +154,26 @@ export const InvoiceManagement = () => {
                         </TableHeader>
                         <TableBody>
                             {filteredInvoices.map((invoice) => (
-                                <TableRow key={invoice.id} className="hover:bg-muted/50">
-                                    <TableCell className="font-medium text-left">{invoice.id}</TableCell>
-                                    <TableCell className="text-left">{invoice.client}</TableCell>
+                                <TableRow key={invoice._id} className="hover:bg-muted/50">
+                                    <TableCell className="font-medium text-left">{invoice.invoicenumber}</TableCell>
+                                    <TableCell className="text-left">
+                                        {/* {invoice.client} */}
+                                    </TableCell>
                                     <TableCell className="font-medium text-left">
-                                        ${invoice.amount.toLocaleString()}
+                                        ${invoice.totalamount?.toLocaleString() ?? 0}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {getStatusBadge(invoice.status, invoice.daysOverdue)}
+                                        {getStatusBadge(invoice.status)}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {invoice.dueDate}
+                                        {formatDate(invoice.duedate)}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {getRiskBadge(invoice.riskScore)}
+                                        {/* {getRiskBadge(invoice.riskScore)} */}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => viewInvoicePDF(invoice._id)}>
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                         </div>
@@ -265,7 +195,7 @@ export const InvoiceManagement = () => {
                                 <Input
                                     placeholder="Search invoice drafts..."
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) => setSearchTermDraft(e.target.value)}
                                     className="pl-9 w-64"
                                 />
                             </div>
@@ -288,22 +218,24 @@ export const InvoiceManagement = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredInvoices.map((invoice) => (
-                                <TableRow key={invoice.id} className="hover:bg-muted/50">
-                                    <TableCell className="font-medium text-left">{invoice.id}</TableCell>
-                                    <TableCell className="text-left">{invoice.client}</TableCell>
+                            {filteredDraftInvoices.map((invoice) => (
+                                <TableRow key={invoice._id} className="hover:bg-muted/50">
+                                    <TableCell className="font-medium text-left">{invoice.invoicenumber}</TableCell>
+                                    <TableCell className="text-left">
+                                        {/* {invoice.client} */}
+                                    </TableCell>
                                     <TableCell className="font-medium text-left">
-                                        ${invoice.amount.toLocaleString()}
+                                        ${invoice.totalamount?.toLocaleString() ?? 0}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {invoice.dueDate}
+                                        {formatDate(invoice.duedate)}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {getRiskBadge(invoice.riskScore)}
+                                        {/* {getRiskBadge(invoice.riskScore)} */}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleInvoiceView(invoice._id)}>
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
