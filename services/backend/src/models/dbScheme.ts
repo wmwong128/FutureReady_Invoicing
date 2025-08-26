@@ -119,7 +119,8 @@ const customersSchema = new Schema<ICustomer>(
       index: {
         unique: true,
         partialFilterExpression: { stripeCustomerId: { $type: "string" } } // only enforce uniqueness when it's a string
-      }
+      },
+      sparse: true
     },
     name: {
       type: String,
@@ -320,7 +321,8 @@ const invoicesSchema = new Schema<IInvoice>(
       type: String,
       required: false,
       unique: true,
-      default: null
+      default: null,
+      sparse: true
     },
     issueremail: {
       type: String,
@@ -405,49 +407,44 @@ const invoicesSchema = new Schema<IInvoice>(
   }
 );
 
-invoicesSchema.pre("save", async function (next) {
-  try {
-    const order = await Order.findOne({ ordernumber: this.ordernumber });
-    if (!order) {
-      throw new Error(`Order ${this.ordernumber} not found`);
-    }
+// invoicesSchema.pre("save", async function (next) {
+//   try {
+//     const order = await Order.findOne({ ordernumber: this.ordernumber });
+//     if (!order) {
+//       throw new Error(`Order ${this.ordernumber} not found`);
+//     }
 
-    let subtotal = 0;
-    order.orderlines.forEach((line: any) => {
-      subtotal += line.priceeach * line.quantityordered;
-    });
+//     let subtotal = 0;
+//     order.orderlines.forEach((line: any) => {
+//       subtotal += line.priceeach * line.quantityordered;
+//     });
 
-    this.subtotal = subtotal;
-    this.taxamount = (this.subtotal * (this.taxrate || 0)) / 100;
-    this.totalamount = this.subtotal + this.taxamount;
+//     this.subtotal = subtotal;
+//     this.taxamount = (this.subtotal * (this.taxrate || 0)) / 100;
+//     this.totalamount = this.subtotal + this.taxamount;
 
-    next();
-  } catch (err) {
-    next(err as any);
-  }
-});
+//     next();
+//   } catch (err) {
+//     next(err as any);
+//   }
+// });
 
 // Create models
 const Customer = model<ICustomer>('Customer', customersSchema);
 const Order = model<IOrder>('Order', ordersSchema);
 const Invoice = model<IInvoice>('Invoice', invoicesSchema);
 
-// Export
-export = {
-  Invoice,
-  Customer,
-  Order,
-  OrderStatus,
-  DealSize,
-  DangerLevel,
-  InvoiceStatus,
-  PaymentMethod,
-  // Type exports for consumers
-  IInvoice: {} as IInvoice,
-  ICustomer: {} as ICustomer,
-  IOrder: {} as IOrder,
-  IOrderLine: {} as IOrderLine
-};
+// // Export
+// export = {
+//   Invoice,
+//   Customer,
+//   Order,
+//   OrderStatus,
+//   DealSize,
+//   DangerLevel,
+//   InvoiceStatus,
+//   PaymentMethod
+// };
 
 // For backward compatibility with CommonJS
 module.exports = {
@@ -460,3 +457,5 @@ module.exports = {
   InvoiceStatus,
   PaymentMethod
 };
+
+export type { IInvoice, ICustomer, IOrder, IOrderLine };
