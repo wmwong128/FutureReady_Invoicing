@@ -1,10 +1,9 @@
 import metadata = require('./metadata');
-import schemas = require('./models/dbScheme');
 import mailing = require('./mailing');
 
 const mongoose = require('mongoose');
 const { connectDB } = require("./models/database");
-const { Invoice, Customer, Order, InvoiceStatus } = schemas;
+const { Invoice, Customer, Order, InvoiceStatus } = require("./models/dbScheme");
 const { sendEmail } = mailing;
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET);

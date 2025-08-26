@@ -1,7 +1,8 @@
 import express = require('express');
 import metadata = require('./metadata');
-import schemas = require('./models/dbScheme');
+import type { IInvoice, ICustomer, IOrder } from "./models/dbScheme";
 import mailing = require('./mailing');
+import Counter = require('./models/countSchema');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
 import cors = require('cors');
 
@@ -19,7 +20,8 @@ const NOAUTH = (process.env['NOAUTH'] ?? '') === 'true';
 const app = express();
 const mongoose = require('mongoose');
 const { connectDB } = require("./models/database");
-const { Invoice, Customer, Order } = schemas;
+const { Invoice, Customer, Order } = require("./models/dbScheme");
+// const { Invoice, Customer, Order } = schemas;
 const { sendEmail } = mailing;
 const { calculateCustomerRisk, getRiskLevel } = require("./models/threshold");
 
@@ -56,47 +58,6 @@ const requireAuth = NOAUTH ?
   (req: express.Request, res: express.Response, next: express.NextFunction) => next() : 
   auth(authOptions);
 
-app.get('/auth/config', (req, res) => {
-  res.json({
-    domain: AUTH0_ISSUER_BASE_URL,
-    audience: AUTH0_AUDIENCE,
-    noAuth: NOAUTH,
-    message: 'Use these settings to configure Auth0 in your frontend'
-  });
-});
-
-// Auth check endpoint
-app.get('/auth/me', requireAuth, (req, res) => {
-  const user = (req as any).auth;
-  res.json({
-    authenticated: true,
-    user: {
-      sub: user?.sub,
-      email: user?.email,
-      name: user?.name,
-    }
-  });
-});
-
-// Token validation endpoint
-app.get('/auth/validate', requireAuth, (req, res) => {
-  res.json({
-    valid: true,
-    message: 'Token is valid',
-    expires: (req as any).auth?.exp
-  });
-});
-
-// Logout endpoint - mainly for cleanup if needed
-app.post('/auth/logout', (req, res) => {
-  res.json({
-    message: 'Logged out successfully',
-    instructions: 'Frontend should clear tokens and redirect to Auth0 logout URL'
-  });
-});
-
-app.use(errorHandler);
-
 async function startServer() {
   try {
     await connectDB();
@@ -106,9 +67,34 @@ async function startServer() {
   }
 }
 
+if (NOAUTH) {
+  app.use((req, _res, next) => {
+    req.user = { email: "abcd@gmail.com" };
+    next();
+  });
+} else {
+  app.use(requireAuth);
+
+  // map Auth0 -> req.user
+  app.use((req, _res, next) => {
+    if (req.auth?.payload) {
+      req.user = {
+        email: req.auth.payload.email ?? undefined,
+      };
+    }
+    next();
+  });
+}
+
+// app.use((req, _res, next) => {
+//   req.user = { email: "test2@gmail.com" };
+//   next();
+// });
+
+app.use(errorHandler);
 startServer();
 
-app.get('/', async (_req, res) => {
+app.get('/', async (req, res) => {
   try{
     const now = new Date();
     const thirtyDaysAgo = new Date();
@@ -116,7 +102,7 @@ app.get('/', async (_req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const invoices = await Invoice.find({});
+    const invoices = await Invoice.find({ issueremail: req.user?.email });
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -201,9 +187,28 @@ app.listen(containerPort, () => {
 });
 
 // Invoice dashboard
-app.get('/invoice', async (_req, res) => {
+app.get('/invoice', async (req, res) => {
   try {
-    const allInvoices = await Invoice.find({});
+    const allInvoicesRaw  = await Invoice.find({issueremail: req.user?.email});
+    const allInvoices: any[] = [];
+
+    for (const invoice of allInvoicesRaw) {
+      const order = await Order.findOne({ ordernumber: invoice.ordernumber });
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const customer = await Customer.findOne({ customerid: order.customerid });
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      const invObj = invoice.toObject() as any;
+      invObj.client = customer.name; 
+      invObj.riskscore = customer.riskscore;
+      invObj.risk = customer.dangerlevel;
+      allInvoices.push(invObj);
+    }
     
     // Filter invoices by status
     const nonDraftInvoices = allInvoices.filter(invoice => invoice.status !== "DRAFT");
@@ -287,41 +292,109 @@ app.post('/invoice', async (req, res) => {
   let stripeInvoice = null;
   let stripeCustomer = null;
   let createdInvoiceItems = [];
+
+  interface InvoiceOrderLine {
+  productline: string;
+  productcode?: number;
+  quantityordered: number;
+  priceeach: number;
+}
+
+interface InvoiceData {
+  invoicenumber: string;
+  issueremail: string;
+  client: string;
+  invoicedate: string;
+  duedate: string;
+  orderlines: InvoiceOrderLine[];
+}
   const session = await mongoose.startSession();
   
   try {
-    const invoiceData = req.body;
+    const invoiceData: InvoiceData = req.body;
     
     // Start transaction
     await session.startTransaction();
 
-    const order = await Order.findOne({ ordernumber: invoiceData.ordernumber }).session(session);
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+    // Add new order
+    async function getNextOrderNumber() {
+      const counter = await Counter.findOneAndUpdate(
+        { name: "ordernumber" },
+        { $inc: { value: 1 } },
+        { new: true, upsert: true }
+      );
+      return counter.value;
     }
+
+    const nextOrderNumber = await getNextOrderNumber();
+    const invoiceDate = new Date(invoiceData.invoicedate);
+    const invoiceDue = new Date(invoiceData.duedate);
+
+    const invoiceCustomer = await Customer.findOne({ name: invoiceData.client }).session(session);
+    if (!invoiceCustomer){
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const orderlines = invoiceData.orderlines.map((line: InvoiceOrderLine, index: number) => ({
+      orderlinenumber: index + 1,
+      productline: line.productline,
+      productcode: line.productcode ?? 1234,
+      quantityordered: line.quantityordered,
+      priceeach: line.priceeach,
+      sales: line.quantityordered * line.priceeach,
+      msrp: line.priceeach
+    }));
+
+    const newOrder = new Order({
+      ordernumber: nextOrderNumber,
+      orderdate: invoiceDate,
+      status: "IN PROCESS",
+      qtr_id: Math.ceil((invoiceDate.getMonth() + 1) / 3),
+      month_id: invoiceDate.getMonth() + 1,
+      year_id: invoiceDate.getFullYear(),
+      customerid: invoiceCustomer.customerid,
+      dealsize: "MEDIUM",
+      orderlines
+    });
+
+    await newOrder.save({ session });
+
+    // Finish adding order and retriving the order to use in invoice creation
+    const order = newOrder;
     
     let customer = await Customer.findOne({ customerid: order.customerid }).session(session);
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
     
+    // Creating new invoice in db
+    const newInvoiceData: Partial<IInvoice> = {
+      ordernumber: order.ordernumber,
+      invoicenumber: invoiceData.invoicenumber,
+      invoicedate: invoiceDate,
+      issueremail: req.user?.email ?? "",
+      duedate: invoiceDue
+    };
+
     let subtotal = 0;
     order.orderlines.forEach((line: any) => {
       subtotal += line.priceeach * line.quantityordered;
     });
 
-    invoiceData.subtotal = subtotal;
-    invoiceData.taxamount = (invoiceData.subtotal * (invoiceData.taxrate || 0)) / 100;
-    invoiceData.totalamount = invoiceData.subtotal + invoiceData.taxamount;
+    newInvoiceData.subtotal = subtotal;
+    newInvoiceData.taxamount = (newInvoiceData.subtotal * (newInvoiceData.taxrate || 0)) / 100;
+    newInvoiceData.totalamount = newInvoiceData.subtotal + newInvoiceData.taxamount;
     const riskScore = await calculateCustomerRisk(customer.customerid);
     const riskLevel = getRiskLevel(riskScore);
 
+    // Update the danger level of the customer
     await Customer.findOneAndUpdate(
       { customerid: order.customerid },
       { 
         $set: { 
-          totalrevenue: (customer.totalrevenue || 0) + (invoiceData.totalamount || 0),
-          totaloutstanding: (customer.totaloutstanding || 0) + (invoiceData.totalamount || 0),
+          totalrevenue: (customer.totalrevenue || 0) + (newInvoiceData.totalamount || 0),
+          totaloutstanding: (customer.totaloutstanding || 0) + (newInvoiceData.totalamount || 0),
+          riskscore: riskScore,
           dangerlevel: riskLevel
         }, 
         $inc: { totalinvoices: 1 }
@@ -329,6 +402,7 @@ app.post('/invoice', async (req, res) => {
       { new: true, session }
     );
     
+    // Cheak whether the customer has stripe customer id or not (create one)
     if (!customer.stripeCustomerId) {
       stripeCustomer = await stripe.customers.create({
         name: customer.name,
@@ -354,9 +428,11 @@ app.post('/invoice', async (req, res) => {
       }
     }
 
-    const newInvoice = new Invoice(invoiceData);
+    // Create new invoice in db
+    const newInvoice = new Invoice(newInvoiceData);
     await newInvoice.save({ session });
 
+    // Create new invoice in stripe
     stripeInvoice = await stripe.invoices.create({
       customer: customer.stripeCustomerId,
       collection_method: 'send_invoice',
@@ -410,10 +486,11 @@ app.post('/invoice', async (req, res) => {
       createdInvoiceItems.push(taxItem.id);
     }
 
-    if (newInvoice.status !== 'DRAFT') {
-      await stripe.invoices.finalizeInvoice(stripeInvoice.id);
-    }
+    // if (newInvoice.status !== 'DRAFT') {
+    //   await stripe.invoices.finalizeInvoice(stripeInvoice.id);
+    // }
 
+    // After get the stripe id, update in db
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       newInvoice._id,
       { $set: { stripeinvoiceid: stripeInvoice.id } },
@@ -429,8 +506,7 @@ app.post('/invoice', async (req, res) => {
     res.status(200).json({ 
       message: "Invoice created successfully!",
       invoice: updatedInvoice,
-      stripeInvoiceId: stripeInvoice.id,
-      stripeInvoiceUrl: stripeInvoice.hosted_invoice_url
+      stripeInvoiceId: stripeInvoice.id
     });
 
   } catch (err) {
@@ -620,7 +696,9 @@ app.patch("/invoice/:id", async (req, res) => {
             totalrevenue: delta,
             totaloutstanding: delta
           },
-          $set: { dangerlevel: riskLevel }
+          $set: { 
+            riskscore: riskScore,
+            dangerlevel: riskLevel }
         },
         { new: true, session }
       );
@@ -818,6 +896,7 @@ app.delete("/invoice/:id", async (req, res) => {
           totalinvoices: -1
         },
         $set: { 
+          riskscore: riskScore,
           dangerlevel: riskLevel 
         }
       },
@@ -1001,15 +1080,20 @@ app.post("/invoice/:id/send", async (req, res) => {
   }
 });
 
+app.get("/customers", async (req, res) => {
+  const customers = await Customer.find({}, "_id name");
+  res.json(customers);
+});
+
 app.get('/client', async (_req, res) => {
   try {
     // Render
-    const allCustomers = await Customer.find({});
+    const allCustomers: ICustomer[] = await Customer.find({}) as ICustomer[];
     const cus = {
       totalclients: allCustomers.length,
-      averagepaymentdays: allCustomers.reduce((acc, cur) => acc + cur.averageday, 0) / allCustomers.length,
-      highriskcounts: allCustomers.filter(c => c.dangerlevel === 'HIGH').length,
-      allrevenue: allCustomers.reduce((acc, cur) => acc + cur.totalrevenue, 0),
+      averagepaymentdays: allCustomers.reduce((acc: number, cur: ICustomer) => acc + cur.averageday, 0) / allCustomers.length,
+      highriskcounts: allCustomers.filter((c: ICustomer) => c.dangerlevel === 'HIGH').length,
+      allrevenue: allCustomers.reduce((acc: number, cur: ICustomer) => acc + cur.totalrevenue, 0),
       customers: allCustomers
     };
     res.json(cus); 
