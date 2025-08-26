@@ -67,19 +67,34 @@ async function startServer() {
   }
 }
 
-// app.use(requireAuth);
+if (NOAUTH) {
+  app.use((req, _res, next) => {
+    req.user = { email: "abcd@gmail.com" };
+    next();
+  });
+} else {
+  app.use(requireAuth);
+
+  // map Auth0 -> req.user
+  app.use((req, _res, next) => {
+    if (req.auth?.payload) {
+      req.user = {
+        email: req.auth.payload.email ?? undefined,
+      };
+    }
+    next();
+  });
+}
+
+// app.use((req, _res, next) => {
+//   req.user = { email: "test2@gmail.com" };
+//   next();
+// });
+
 app.use(errorHandler);
 startServer();
 
-// Test Auth
-app.use((req, res, next) => {
-  (req as any).user = {
-    email: "test@example.com"
-  };
-  next();
-});
-
-app.get('/', async (_req, res) => {
+app.get('/', async (req, res) => {
   try{
     const now = new Date();
     const thirtyDaysAgo = new Date();
@@ -87,7 +102,7 @@ app.get('/', async (_req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const invoices = await Invoice.find({});
+    const invoices = await Invoice.find({ issueremail: req.user?.email });
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -172,9 +187,9 @@ app.listen(containerPort, () => {
 });
 
 // Invoice dashboard
-app.get('/invoice', async (_req, res) => {
+app.get('/invoice', async (req, res) => {
   try {
-    const allInvoicesRaw  = await Invoice.find({});
+    const allInvoicesRaw  = await Invoice.find({issueremail: req.user?.email});
     const allInvoices: any[] = [];
 
     for (const invoice of allInvoicesRaw) {
@@ -357,7 +372,7 @@ interface InvoiceData {
       ordernumber: order.ordernumber,
       invoicenumber: invoiceData.invoicenumber,
       invoicedate: invoiceDate,
-      issueremail: "abcd@gmail.com",
+      issueremail: req.user?.email ?? "",
       duedate: invoiceDue
     };
 
@@ -491,8 +506,7 @@ interface InvoiceData {
     res.status(200).json({ 
       message: "Invoice created successfully!",
       invoice: updatedInvoice,
-      stripeInvoiceId: stripeInvoice.id,
-      stripeInvoiceUrl: stripeInvoice.hosted_invoice_url
+      stripeInvoiceId: stripeInvoice.id
     });
 
   } catch (err) {
