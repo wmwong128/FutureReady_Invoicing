@@ -190,6 +190,7 @@ app.get('/invoice', async (_req, res) => {
 
       const invObj = invoice.toObject() as any;
       invObj.client = customer.name; 
+      invObj.riskscore = customer.riskscore;
       invObj.risk = customer.dangerlevel;
       allInvoices.push(invObj);
     }
@@ -378,6 +379,7 @@ interface InvoiceData {
         $set: { 
           totalrevenue: (customer.totalrevenue || 0) + (newInvoiceData.totalamount || 0),
           totaloutstanding: (customer.totaloutstanding || 0) + (newInvoiceData.totalamount || 0),
+          riskscore: riskScore,
           dangerlevel: riskLevel
         }, 
         $inc: { totalinvoices: 1 }
@@ -680,7 +682,9 @@ app.patch("/invoice/:id", async (req, res) => {
             totalrevenue: delta,
             totaloutstanding: delta
           },
-          $set: { dangerlevel: riskLevel }
+          $set: { 
+            riskscore: riskScore,
+            dangerlevel: riskLevel }
         },
         { new: true, session }
       );
@@ -878,6 +882,7 @@ app.delete("/invoice/:id", async (req, res) => {
           totalinvoices: -1
         },
         $set: { 
+          riskscore: riskScore,
           dangerlevel: riskLevel 
         }
       },

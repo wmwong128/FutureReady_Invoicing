@@ -93,6 +93,7 @@ interface ICustomer extends Document {
   territory: string;
   contactlastname: string;
   contactfirstname: string;
+  riskscore?: number;
   dangerlevel: DangerLevel;
   totalrevenue: number;
   totalinvoices: number;
@@ -185,6 +186,11 @@ const customersSchema = new Schema<ICustomer>(
       type: String,
       required: true,
       trim: true
+    },
+    riskscore: {
+      type: Number,
+      required: true,
+      default: 0
     },
     dangerlevel: {
       type: String,
