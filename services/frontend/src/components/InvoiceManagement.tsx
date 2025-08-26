@@ -31,19 +31,24 @@ export const InvoiceManagement = () => {
         }
     };
 
-    // const getRiskBadge = (score: number) => {
-    //     if (score >= 70) return <Badge variant="destructive">High</Badge>;
-    //     if (score >= 40) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Med</Badge>;
-    //     return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Low</Badge>;
-    // };
+    const getRiskBadge = (score: number, riskstatus: string) => {
+        switch(riskstatus) {
+            case "NORMAL": 
+                return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Normal ({score})</Badge>;
+            case "HIGH":
+                return <Badge variant="destructive">High ({score})</Badge>;
+            default:
+                return <Badge variant="outline">Unknown</Badge>
+        }
+    }
 
     const filteredInvoices = invoices?.filter(invoice =>
-        // invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice?.invoicenumber?.toLowerCase().includes(searchTerm.toLowerCase())
+        (invoice.client ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (invoice.invoicenumber ?? "").toLowerCase().includes(searchTerm.toLowerCase())
     ) ?? [];
     const filteredDraftInvoices = draftInvoices?.filter(invoice => 
-        // invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice?.invoicenumber?.toLowerCase().includes(searchTermDraft.toLowerCase())
+        (invoice.client ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (invoice.invoicenumber ?? "").toLowerCase().includes(searchTermDraft.toLowerCase())
     ) ?? [];
 
     const handleInvoiceView = (id: string) => {
@@ -129,9 +134,9 @@ export const InvoiceManagement = () => {
                                     className="pl-9 w-64"
                                 />
                             </div>
-                            <Button variant="outline" size="icon">
+                            {/* <Button variant="outline" size="icon">
                                 <Filter className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                         </div>
                     </div>
                 </CardHeader>
@@ -153,7 +158,7 @@ export const InvoiceManagement = () => {
                                 <TableRow key={invoice._id} className="hover:bg-muted/50">
                                     <TableCell className="font-medium text-left">{invoice.invoicenumber}</TableCell>
                                     <TableCell className="text-left">
-                                        {/* {invoice.client} */}
+                                        {invoice.client}
                                     </TableCell>
                                     <TableCell className="font-medium text-left">
                                         ${invoice.totalamount?.toLocaleString() ?? 0}
@@ -165,7 +170,7 @@ export const InvoiceManagement = () => {
                                         {formatDate(invoice.duedate)}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {/* {getRiskBadge(invoice.riskScore)} */}
+                                        {getRiskBadge(invoice.riskscore ?? 0, invoice.risk ?? "")}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">
@@ -190,14 +195,14 @@ export const InvoiceManagement = () => {
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder="Search invoice drafts..."
-                                    value={searchTerm}
+                                    value={searchTermDraft}
                                     onChange={(e) => setSearchTermDraft(e.target.value)}
                                     className="pl-9 w-64"
                                 />
                             </div>
-                            <Button variant="outline" size="icon">
+                            {/* <Button variant="outline" size="icon">
                                 <Filter className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                         </div>
                     </div>
                 </CardHeader>
@@ -218,7 +223,7 @@ export const InvoiceManagement = () => {
                                 <TableRow key={invoice._id} className="hover:bg-muted/50">
                                     <TableCell className="font-medium text-left">{invoice.invoicenumber}</TableCell>
                                     <TableCell className="text-left">
-                                        {/* {invoice.client} */}
+                                        {invoice.client}
                                     </TableCell>
                                     <TableCell className="font-medium text-left">
                                         ${invoice.totalamount?.toLocaleString() ?? 0}
@@ -227,7 +232,7 @@ export const InvoiceManagement = () => {
                                         {formatDate(invoice.duedate)}
                                     </TableCell>
                                     <TableCell className="text-left">
-                                        {/* {getRiskBadge(invoice.riskScore)} */}
+                                        {getRiskBadge(invoice.riskscore ?? 0, invoice.risk ?? "")}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">

@@ -8,6 +8,10 @@ export interface Invoice {
     totalamount: number;
     invoicedate: string;
     duedate: string;
+    client?: string;
+    riskscore?: number;
+    risk?: string;
+    taxrate?: number;
 }
 
 export interface InvoiceStats {
@@ -54,4 +58,12 @@ export interface OrderLine {
     priceeach?: number;
     sales?: number;
     msrp?: number;
+}
+
+export interface NewInvoiceRequest {
+    client: string;
+    invoicenumber: string;
+    invoicedate: string;
+    duedate: string;
+    orderlines: OrderLine[];
 }

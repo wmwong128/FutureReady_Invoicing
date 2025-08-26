@@ -16,6 +16,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Customer } from "@/data/types/Customer";
+import { useCustomer } from "@/hooks/useCustomer";
 
 interface ClientComboboxProps {
     selectedClient: Customer | null;
@@ -23,40 +24,16 @@ interface ClientComboboxProps {
     disabled?: boolean;
 }
 
-// Mock API call - replace with real API
-const fetchClients = async (): Promise<Customer[]> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    return [
-        { _id: "1", name: "Acme Corporation", email: "billing@acme.com" },
-        { _id: "2", name: "TechStart Inc", email: "accounts@techstart.com" },
-        { _id: "3", name: "Global Solutions Ltd", email: "finance@globalsolutions.com" },
-        { _id: "4", name: "Innovative Designs", email: "admin@innovativedesigns.com" },
-        { _id: "5", name: "Future Systems", email: "billing@futuresystems.com" },
-    ];
-};
-
 export const ClientCombobox = ({ selectedClient, onClientSelect, disabled = false }: ClientComboboxProps) => {
     const [open, setOpen] = useState(false);
     const [clients, setClients] = useState<Customer[]>([]);
-    const [loading, setLoading] = useState(false);
 
+    const { customersData } = useCustomer()
     useEffect(() => {
-        const loadClients = async () => {
-            setLoading(true);
-            try {
-                const clientData = await fetchClients();
-                setClients(clientData);
-            } catch (error) {
-                console.error("Failed to fetch clients:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadClients();
-    }, []);
+        if(customersData && Array.isArray(customersData)) {
+            setClients(customersData)
+        }
+    }, [customersData])
 
     return (
         <Popover open={open} onOpenChange={disabled? undefined: setOpen}>
@@ -79,12 +56,12 @@ export const ClientCombobox = ({ selectedClient, onClientSelect, disabled = fals
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent className="w-100 p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Search clients..." />
                     <CommandList>
                         <CommandEmpty>
-                            {loading ? "Loading clients..." : "No clients found."}
+                            No clients found.
                         </CommandEmpty>
                         <CommandGroup>
                             {clients.map((client) => (

@@ -1081,7 +1081,7 @@ app.post("/invoice/:id/send", async (req, res) => {
 });
 
 app.get("/customers", async (req, res) => {
-  const customers = await Customer.find({}, "_id name");
+  const customers = await Customer.find({}, "_id name email");
   res.json(customers);
 });
 
