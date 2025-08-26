@@ -1,9 +1,9 @@
 import express = require('express');
 import metadata = require('./metadata');
-import schemas = require('./models/dbScheme');
+import type { IInvoice, ICustomer, IOrder } from "./models/dbScheme";
 import mailing = require('./mailing');
+import Counter = require('./models/countSchema');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
-import cors = require('cors');
 import cors = require('cors');
 
 const { auth } = expressOAuth2JWTBearer;
@@ -20,7 +20,8 @@ const NOAUTH = (process.env['NOAUTH'] ?? '') === 'true';
 const app = express();
 const mongoose = require('mongoose');
 const { connectDB } = require("./models/database");
-const { Invoice, Customer, Order } = schemas;
+const { Invoice, Customer, Order } = require("./models/dbScheme");
+// const { Invoice, Customer, Order } = schemas;
 const { sendEmail } = mailing;
 const { calculateCustomerRisk, getRiskLevel } = require("./models/threshold");
 
@@ -57,47 +58,6 @@ const requireAuth = NOAUTH ?
   (req: express.Request, res: express.Response, next: express.NextFunction) => next() : 
   auth(authOptions);
 
-app.get('/auth/config', (req, res) => {
-  res.json({
-    domain: AUTH0_ISSUER_BASE_URL,
-    audience: AUTH0_AUDIENCE,
-    noAuth: NOAUTH,
-    message: 'Use these settings to configure Auth0 in your frontend'
-  });
-});
-
-// Auth check endpoint
-app.get('/auth/me', requireAuth, (req, res) => {
-  const user = (req as any).auth;
-  res.json({
-    authenticated: true,
-    user: {
-      sub: user?.sub,
-      email: user?.email,
-      name: user?.name,
-    }
-  });
-});
-
-// Token validation endpoint
-app.get('/auth/validate', requireAuth, (req, res) => {
-  res.json({
-    valid: true,
-    message: 'Token is valid',
-    expires: (req as any).auth?.exp
-  });
-});
-
-// Logout endpoint - mainly for cleanup if needed
-app.post('/auth/logout', (req, res) => {
-  res.json({
-    message: 'Logged out successfully',
-    instructions: 'Frontend should clear tokens and redirect to Auth0 logout URL'
-  });
-});
-
-app.use(errorHandler);
-
 async function startServer() {
   try {
     await connectDB();
@@ -107,10 +67,117 @@ async function startServer() {
   }
 }
 
+if (NOAUTH) {
+  app.use((req, _res, next) => {
+    req.user = { email: "abcd@gmail.com" };
+    next();
+  });
+} else {
+  app.use(requireAuth);
+
+  // map Auth0 -> req.user
+  app.use((req, _res, next) => {
+    if (req.auth?.payload) {
+      req.user = {
+        email: req.auth.payload.email ?? undefined,
+      };
+    }
+    next();
+  });
+}
+
+// app.use((req, _res, next) => {
+//   req.user = { email: "test2@gmail.com" };
+//   next();
+// });
+
+app.use(errorHandler);
 startServer();
 
-app.get('/', (_req, res) => {
-  res.json('Dashboard');
+app.get('/', async (req, res) => {
+  try{
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(now.getDate() - 60);
+
+    const invoices = await Invoice.find({ issueremail: req.user?.email });
+
+    let monthlyrevenue = 0;
+    let lastmonthrevenue = 0;
+    let aroutstanding = 0;
+    let dayssalesoutstanding = 0;
+    let totalpaid = 0;
+    let totalunpaid = 0;
+    let totaloverdue = 0;
+    let percentagerevenue = 0;
+    let debt = 0;
+
+    const revenueTrend: { month: string; actual: number }[] = [];
+
+    for (const inv of invoices) {
+      if (inv.status === "PAID") {
+        if (inv.invoicedate >= thirtyDaysAgo && inv.invoicedate <= now) {
+          monthlyrevenue += inv.totalamount ?? 0;
+        }
+        if (inv.invoicedate >= sixtyDaysAgo && inv.invoicedate <= thirtyDaysAgo) {
+          lastmonthrevenue += inv.totalamount ?? 0;
+        }
+        const percentagerevenue = lastmonthrevenue > 0 ? ((monthlyrevenue - lastmonthrevenue) / lastmonthrevenue) * 100 : 0;
+        
+        if (inv.invoicedate) {
+          const date = new Date(inv.invoicedate);
+          const monthKey = date.toLocaleString("default", { month: "short" });
+          let monthEntry = revenueTrend.find((item) => item.month === monthKey);
+
+          if (monthEntry) {
+            monthEntry.actual += inv.totalamount ?? 0;
+          } else {
+            revenueTrend.push({ month: monthKey, actual: inv.totalamount ?? 0 });
+          }
+        }
+
+        totalpaid++;
+      }
+
+      if (inv.status === "PENDING") {
+        aroutstanding += inv.totalamount ?? 0;
+        dayssalesoutstanding += inv.payday ?? 0;
+        totalunpaid++;
+      }
+
+      if (inv.status === "OVERDUE") {
+        debt += inv.totalamount ?? 0;
+        totaloverdue++;
+      }
+    }
+
+    const monthlyRevenueBoard = {monthlyrevenue, percentagerevenue};
+    const invoiceStatusList = {totaloverdue, totalunpaid, totalpaid};
+
+    if (totalunpaid > 0) {
+      dayssalesoutstanding = Math.round(dayssalesoutstanding / totalunpaid);
+    } else {
+      dayssalesoutstanding = 0;
+    }
+
+    const dashboard = { 
+      mrr: monthlyRevenueBoard, 
+      arAging: aroutstanding, 
+      dso: dayssalesoutstanding, 
+      debt: debt, 
+      invoiceStatusList: invoiceStatusList,
+      revenuetrend: revenueTrend
+    };
+
+    res.json(dashboard);
+
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong", details: err });
+  }
 });
 
 app.use(errorHandler);
@@ -120,9 +187,28 @@ app.listen(containerPort, () => {
 });
 
 // Invoice dashboard
-app.get('/invoice', async (_req, res) => {
+app.get('/invoice', async (req, res) => {
   try {
-    const allInvoices = await Invoice.find({});
+    const allInvoicesRaw  = await Invoice.find({issueremail: req.user?.email});
+    const allInvoices: any[] = [];
+
+    for (const invoice of allInvoicesRaw) {
+      const order = await Order.findOne({ ordernumber: invoice.ordernumber });
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const customer = await Customer.findOne({ customerid: order.customerid });
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      const invObj = invoice.toObject() as any;
+      invObj.client = customer.name; 
+      invObj.riskscore = customer.riskscore;
+      invObj.risk = customer.dangerlevel;
+      allInvoices.push(invObj);
+    }
     
     // Filter invoices by status
     const nonDraftInvoices = allInvoices.filter(invoice => invoice.status !== "DRAFT");
@@ -206,41 +292,109 @@ app.post('/invoice', async (req, res) => {
   let stripeInvoice = null;
   let stripeCustomer = null;
   let createdInvoiceItems = [];
+
+  interface InvoiceOrderLine {
+  productline: string;
+  productcode?: number;
+  quantityordered: number;
+  priceeach: number;
+}
+
+interface InvoiceData {
+  invoicenumber: string;
+  issueremail: string;
+  client: string;
+  invoicedate: string;
+  duedate: string;
+  orderlines: InvoiceOrderLine[];
+}
   const session = await mongoose.startSession();
   
   try {
-    const invoiceData = req.body;
+    const invoiceData: InvoiceData = req.body;
     
     // Start transaction
     await session.startTransaction();
 
-    const order = await Order.findOne({ ordernumber: invoiceData.ordernumber }).session(session);
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+    // Add new order
+    async function getNextOrderNumber() {
+      const counter = await Counter.findOneAndUpdate(
+        { name: "ordernumber" },
+        { $inc: { value: 1 } },
+        { new: true, upsert: true }
+      );
+      return counter.value;
     }
+
+    const nextOrderNumber = await getNextOrderNumber();
+    const invoiceDate = new Date(invoiceData.invoicedate);
+    const invoiceDue = new Date(invoiceData.duedate);
+
+    const invoiceCustomer = await Customer.findOne({ name: invoiceData.client }).session(session);
+    if (!invoiceCustomer){
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const orderlines = invoiceData.orderlines.map((line: InvoiceOrderLine, index: number) => ({
+      orderlinenumber: index + 1,
+      productline: line.productline,
+      productcode: line.productcode ?? 1234,
+      quantityordered: line.quantityordered,
+      priceeach: line.priceeach,
+      sales: line.quantityordered * line.priceeach,
+      msrp: line.priceeach
+    }));
+
+    const newOrder = new Order({
+      ordernumber: nextOrderNumber,
+      orderdate: invoiceDate,
+      status: "IN PROCESS",
+      qtr_id: Math.ceil((invoiceDate.getMonth() + 1) / 3),
+      month_id: invoiceDate.getMonth() + 1,
+      year_id: invoiceDate.getFullYear(),
+      customerid: invoiceCustomer.customerid,
+      dealsize: "MEDIUM",
+      orderlines
+    });
+
+    await newOrder.save({ session });
+
+    // Finish adding order and retriving the order to use in invoice creation
+    const order = newOrder;
     
     let customer = await Customer.findOne({ customerid: order.customerid }).session(session);
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
     
+    // Creating new invoice in db
+    const newInvoiceData: Partial<IInvoice> = {
+      ordernumber: order.ordernumber,
+      invoicenumber: invoiceData.invoicenumber,
+      invoicedate: invoiceDate,
+      issueremail: req.user?.email ?? "",
+      duedate: invoiceDue
+    };
+
     let subtotal = 0;
     order.orderlines.forEach((line: any) => {
       subtotal += line.priceeach * line.quantityordered;
     });
 
-    invoiceData.subtotal = subtotal;
-    invoiceData.taxamount = (invoiceData.subtotal * (invoiceData.taxrate || 0)) / 100;
-    invoiceData.totalamount = invoiceData.subtotal + invoiceData.taxamount;
+    newInvoiceData.subtotal = subtotal;
+    newInvoiceData.taxamount = (newInvoiceData.subtotal * (newInvoiceData.taxrate || 0)) / 100;
+    newInvoiceData.totalamount = newInvoiceData.subtotal + newInvoiceData.taxamount;
     const riskScore = await calculateCustomerRisk(customer.customerid);
     const riskLevel = getRiskLevel(riskScore);
 
+    // Update the danger level of the customer
     await Customer.findOneAndUpdate(
       { customerid: order.customerid },
       { 
         $set: { 
-          totalrevenue: (customer.totalrevenue || 0) + (invoiceData.totalamount || 0),
-          totaloutstanding: (customer.totaloutstanding || 0) + (invoiceData.totalamount || 0),
+          totalrevenue: (customer.totalrevenue || 0) + (newInvoiceData.totalamount || 0),
+          totaloutstanding: (customer.totaloutstanding || 0) + (newInvoiceData.totalamount || 0),
+          riskscore: riskScore,
           dangerlevel: riskLevel
         }, 
         $inc: { totalinvoices: 1 }
@@ -248,6 +402,7 @@ app.post('/invoice', async (req, res) => {
       { new: true, session }
     );
     
+    // Cheak whether the customer has stripe customer id or not (create one)
     if (!customer.stripeCustomerId) {
       stripeCustomer = await stripe.customers.create({
         name: customer.name,
@@ -273,9 +428,11 @@ app.post('/invoice', async (req, res) => {
       }
     }
 
-    const newInvoice = new Invoice(invoiceData);
+    // Create new invoice in db
+    const newInvoice = new Invoice(newInvoiceData);
     await newInvoice.save({ session });
 
+    // Create new invoice in stripe
     stripeInvoice = await stripe.invoices.create({
       customer: customer.stripeCustomerId,
       collection_method: 'send_invoice',
@@ -329,10 +486,11 @@ app.post('/invoice', async (req, res) => {
       createdInvoiceItems.push(taxItem.id);
     }
 
-    if (newInvoice.status !== 'DRAFT') {
-      await stripe.invoices.finalizeInvoice(stripeInvoice.id);
-    }
+    // if (newInvoice.status !== 'DRAFT') {
+    //   await stripe.invoices.finalizeInvoice(stripeInvoice.id);
+    // }
 
+    // After get the stripe id, update in db
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       newInvoice._id,
       { $set: { stripeinvoiceid: stripeInvoice.id } },
@@ -348,8 +506,7 @@ app.post('/invoice', async (req, res) => {
     res.status(200).json({ 
       message: "Invoice created successfully!",
       invoice: updatedInvoice,
-      stripeInvoiceId: stripeInvoice.id,
-      stripeInvoiceUrl: stripeInvoice.hosted_invoice_url
+      stripeInvoiceId: stripeInvoice.id
     });
 
   } catch (err) {
@@ -484,67 +641,69 @@ app.patch("/invoice/:id", async (req, res) => {
 
     let updatedOrder = null;
 
-    if (orderUpdateData && Object.keys(orderUpdateData).length > 0) {
-      // If request contains orderlines, handle them separately
-      if (orderUpdateData.orderlines) {
-        for (const line of orderUpdateData.orderlines) {
-          const setObj: { [key: string]: any } = {};
-          if (line.quantityordered !== undefined) setObj["orderlines.$.quantityordered"] = line.quantityordered;
-          if (line.priceeach !== undefined) setObj["orderlines.$.priceeach"] = line.priceeach;
-          if (line.sales !== undefined) setObj["orderlines.$.sales"] = line.sales;
-          if (line.msrp !== undefined) setObj["orderlines.$.msrp"] = line.msrp;
+    if (orderUpdateData.orderlines) {
+      for (const line of orderUpdateData.orderlines) {
+        const setObj: { [key: string]: any } = {};
+        if (line.quantityordered !== undefined) setObj["orderlines.$.quantityordered"] = line.quantityordered;
+        if (line.priceeach !== undefined) setObj["orderlines.$.priceeach"] = line.priceeach;
+        if (line.sales !== undefined) setObj["orderlines.$.sales"] = line.sales;
+        if (line.msrp !== undefined) setObj["orderlines.$.msrp"] = line.msrp;
+        if (line.productline !== undefined) setObj["orderlines.$.productline"] = line.productline;
+        if (line.productcode !== undefined) setObj["orderlines.$.productcode"] = line.productcode;
 
-          const orderLineUpdate = await Order.updateOne(
-            { _id: order._id, "orderlines.orderlinenumber": line.orderlinenumber },
-            { $set: setObj },
-            { session }
-          );
+        const orderLineUpdate = await Order.updateOne(
+          { _id: order._id, "orderlines.orderlinenumber": line.orderlinenumber },
+          { $set: setObj },
+          { session }
+        );
 
-          const refreshedOrder = await Order.findById(order._id).session(session);
-          if (!refreshedOrder) {
-            throw new Error("Failed to refresh order after line update");
-          }
-
-          let subtotal = 0;
-          refreshedOrder.orderlines.forEach((line: any) => {
-            subtotal += line.priceeach * line.quantityordered;
-          });
-
-          invoiceUpdateData.subtotal = subtotal;
-          invoiceUpdateData.taxamount = (subtotal * (invoiceUpdateData.taxrate || 0)) / 100;
-          invoiceUpdateData.totalamount = subtotal + invoiceUpdateData.taxamount;
-
-          await Invoice.findByIdAndUpdate(
-            invoiceId,
-            { $set: invoiceUpdateData },
-            { new: true, runValidators: true, session }
-          );
-
-          const riskScore = await calculateCustomerRisk(customer.customerid);
-          const riskLevel = getRiskLevel(riskScore);
-
-          const oldAmount = Number(existingInvoice.totalamount || 0);
-          const newAmount = Number(invoiceUpdateData.totalamount || 0);
-          const delta = newAmount - oldAmount;
-
-          await Customer.findOneAndUpdate(
-            { customerid: customer.customerid },
-            {
-              $inc: {
-                totalrevenue: delta,
-                totaloutstanding: delta
-              },
-              $set: { dangerlevel: riskLevel }
-            },
-            { new: true, session }
-          );
-          
-          if (orderLineUpdate.matchedCount === 0) {
-            throw new Error(`Order line ${line.orderlinenumber} not found`);
-          }
+        if (orderLineUpdate.matchedCount === 0) {
+          throw new Error(`Order line ${line.orderlinenumber} not found`);
         }
-        delete orderUpdateData.orderlines; 
       }
+
+      const refreshedOrder = await Order.findById(order._id).session(session);
+      if (!refreshedOrder) {
+        throw new Error("Failed to refresh order after updates");
+      }
+
+      let subtotal = 0;
+      refreshedOrder.orderlines.forEach((line: any) => {
+        subtotal += line.priceeach * line.quantityordered;
+      });
+
+      invoiceUpdateData.subtotal = subtotal;
+      invoiceUpdateData.taxamount = (subtotal * (invoiceUpdateData.taxrate || 0)) / 100;
+      invoiceUpdateData.totalamount = subtotal + invoiceUpdateData.taxamount;
+
+      await Invoice.findByIdAndUpdate(
+        invoiceId,
+        { $set: invoiceUpdateData },
+        { new: true, runValidators: true, session }
+      );
+
+      const riskScore = await calculateCustomerRisk(customer.customerid);
+      const riskLevel = getRiskLevel(riskScore);
+
+      const oldAmount = Number(existingInvoice.totalamount || 0);
+      const newAmount = Number(invoiceUpdateData.totalamount || 0);
+      const delta = newAmount - oldAmount;
+
+      await Customer.findOneAndUpdate(
+        { customerid: customer.customerid },
+        {
+          $inc: {
+            totalrevenue: delta,
+            totaloutstanding: delta
+          },
+          $set: { 
+            riskscore: riskScore,
+            dangerlevel: riskLevel }
+        },
+        { new: true, session }
+      );
+
+      delete orderUpdateData.orderlines;
 
       if (Object.keys(orderUpdateData).length > 0) {
         updatedOrder = await Order.findByIdAndUpdate(
@@ -737,6 +896,7 @@ app.delete("/invoice/:id", async (req, res) => {
           totalinvoices: -1
         },
         $set: { 
+          riskscore: riskScore,
           dangerlevel: riskLevel 
         }
       },
@@ -920,15 +1080,20 @@ app.post("/invoice/:id/send", async (req, res) => {
   }
 });
 
+app.get("/customers", async (req, res) => {
+  const customers = await Customer.find({}, "_id name");
+  res.json(customers);
+});
+
 app.get('/client', async (_req, res) => {
   try {
     // Render
-    const allCustomers = await Customer.find({});
+    const allCustomers: ICustomer[] = await Customer.find({}) as ICustomer[];
     const cus = {
       totalclients: allCustomers.length,
-      averagepaymentdays: allCustomers.reduce((acc, cur) => acc + cur.averageday, 0) / allCustomers.length,
-      highriskcounts: allCustomers.filter(c => c.dangerlevel === 'HIGH').length,
-      allrevenue: allCustomers.reduce((acc, cur) => acc + cur.totalrevenue, 0),
+      averagepaymentdays: allCustomers.reduce((acc: number, cur: ICustomer) => acc + cur.averageday, 0) / allCustomers.length,
+      highriskcounts: allCustomers.filter((c: ICustomer) => c.dangerlevel === 'HIGH').length,
+      allrevenue: allCustomers.reduce((acc: number, cur: ICustomer) => acc + cur.totalrevenue, 0),
       customers: allCustomers
     };
     res.json(cus); 

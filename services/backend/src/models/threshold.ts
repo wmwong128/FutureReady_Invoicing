@@ -1,8 +1,4 @@
-import type { MongooseError } from "mongoose";
-import mongoose = require("mongoose");
-import schemas = require("./dbScheme");
-
-const { Invoice, Order } = schemas;
+const { Invoice, Customer, Order } = require("./dbScheme");
 
 /**
  * Calculate the risk score of a customer
@@ -55,7 +51,7 @@ async function calculateCustomerRisk(customerId: string): Promise<number> {
 }
 
 /**
- * Get risk level (low, medium, high)
+ * Get risk level (normal, high)
  */
 function getRiskLevel(score: number): "NORMAL" | "HIGH" {
   if (score < 0.6) return "NORMAL";
