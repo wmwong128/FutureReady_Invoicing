@@ -1,10 +1,9 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from metadata import package_data, env
 from authlib.integrations.flask_oauth2 import ResourceProtector
 from token_validator import Auth0JWTBearerTokenValidator
 from pymongo import MongoClient
-
 import os
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
 os.environ['JAX_PMAP_USE_TENSORSTORE'] = 'false'
@@ -16,25 +15,31 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from datetime import datetime, timedelta
+import ollama
+from contextlib import contextmanager
+from flask import stream_with_context
 
-NAME : str = package_data["name"]
-CONTAINER_PORT : int = package_data["containerPort"]
-AUTH0_DOMAIN : str = env["AUTH0_DOMAIN"]
-AUTH0_AUDIENCE : str = env["AUTH0_AUDIENCE"]
-FRONTEND_MAIN_URL : str = env["FRONTEND_MAIN_URL"]
-NOAUTH : bool = bool(env.get("NOAUTH", False))
-MONGO_URI: str = env.get("MONGO_URI", "mongodb://localhost:27017") #template (need to adjust ltr)
-MONGO_DB: str = env.get("MONGO_DB", "invoicing_db") #template (need to adjust ltr)
-MONGO_INVOICES: str = env.get("MONGO_INVOICES", "invoices") #template (need to adjust ltr)
-MONGO_ORDERS: str = env.get("MONGO_ORDERS", "orders") #template (need to adjust ltr)
-MONGO_ORDERLINES: str = env.get("MONGO_ORDERLINES", "orderlines") #template (need to adjust ltr)
+NAME: str = package_data["name"]
+CONTAINER_PORT: int = package_data["containerPort"]
+AUTH0_DOMAIN: str = env["AUTH0_DOMAIN"]
+AUTH0_AUDIENCE: str = env["AUTH0_AUDIENCE"]
+FRONTEND_MAIN_URL: str = env["FRONTEND_MAIN_URL"]
+NOAUTH: bool = bool(env.get("NOAUTH", False))
+MONGO_URI: str = env.get("MONGO_URI", "mongodb://localhost:27017")
+MONGO_DB: str = env.get("MONGO_DB", "futurereadyinvoice")
+MONGO_ORDERS: str = env.get("MONGO_ORDERS", "orders")
 
-# Reference from https://auth0.com/docs/quickstart/backend/python/interactive 
+# Initialize Ollama model
+OLLAMA_MODEL = "llama3.2:1b"
+try:
+    ollama.pull(OLLAMA_MODEL)  # Pull model at startup
+    print(f"Successfully pulled Ollama model {OLLAMA_MODEL}")
+except Exception as e:
+    print(f"Error pulling Ollama model {OLLAMA_MODEL}: {e}")
+
+# Auth0 JWT setup
 protector = ResourceProtector()
-validator = Auth0JWTBearerTokenValidator(
-    AUTH0_DOMAIN, 
-    AUTH0_AUDIENCE
-)
+validator = Auth0JWTBearerTokenValidator(AUTH0_DOMAIN, AUTH0_AUDIENCE)
 protector.register_token_validator(validator)
 
 def conditional_decorator(func, condition: bool):
@@ -44,7 +49,7 @@ app = Flask(__name__)
 CORS(app, origins=FRONTEND_MAIN_URL)
 
 # Model paths (relative to Docker container)
-CHECKPOINT_DIR = "/app/timesfm_checkpoint"
+CHECKPOINT_DIR = "/app/times_checkpoint"
 EXPORT_DIR = "/app/timesfm_export"
 model_weights_path = os.path.join(EXPORT_DIR, "timesfm_model.pt")
 config_path = os.path.join(EXPORT_DIR, "timesfm_config.json")
@@ -78,7 +83,7 @@ try:
     try:
         with open(checkpoint_file, "rb") as f:
             pass  # Test read access
-        print(f"Read permissions verified for {checkpoint_file}")
+        print(f"Read permissions verified for {CHECKPOINT_DIR}")
     except PermissionError as e:
         print(f"PermissionError: Cannot read {checkpoint_file}: {e}")
         raise
@@ -117,41 +122,33 @@ except Exception as e:
 def fetch_and_process_data():
     try:
         # Connect to MongoDB
-        client = MongoClient(MONGO_URI) #template (need to adjust ltr)
-        db = client[MONGO_DB] #template (need to adjust ltr)
-        invoices_collection = db[MONGO_INVOICES] #template (need to adjust ltr)
-        orders_collection = db[MONGO_ORDERS] #template (need to adjust ltr)
-        orderlines_collection = db[MONGO_ORDERLINES] #template (need to adjust ltr)
+        client = MongoClient(MONGO_URI)
+        db = client[MONGO_DB]
+        orders_collection = db[MONGO_ORDERS]
 
-        # Fetch invoices and orders
-        invoices = list(invoices_collection.find())
+        # Fetch orders
         orders = list(orders_collection.find())
-        orderlines = list(orderlines_collection.find())
+        if not orders:
+            raise ValueError("No orders found in the database")
 
-        if not invoices or not orders or not orderlines:
-            raise ValueError("No data found in invoices, orders, or orderlines collections")
+        # Flatten orderlines array
+        records = []
+        for order in orders:
+            orderdate = pd.to_datetime(order['orderdate']).date()
+            for line in order.get('orderlines', []):
+                records.append({
+                    'ORDERDATE': orderdate,
+                    'SALES': line['sales'],
+                    'QUANTITYORDERED': line['quantityordered'],
+                    'PRICEEACH': line['priceeach'],
+                    'ORDERLINENUMBER': line['orderlinenumber']
+                })
 
-        # Create DataFrames
-        invoices_df = pd.DataFrame(invoices)
-        orders_df = pd.DataFrame(orders)
-        orderlines_df = pd.DataFrame(orderlines)
+        if not records:
+            raise ValueError("No orderlines found in orders")
 
-        # Join invoices and orders on ordernumber
-        df = invoices_df.merge(orders_df[['ordernumber', 'orderdate']], on='ordernumber', how='left')
-        
-        # Join with orderlines on ordernumber
-        df = df.merge(orderlines_df[['ordernumber', 'orderlinenumber', 'quantityordered', 'priceeach', 'sales']], 
-                      on='ordernumber', how='left')
-
-        # Map fields
-        df['ORDERDATE'] = pd.to_datetime(df['orderdate']).dt.date  # Use invoicedate for ORDERDATE
-        df['SALES'] = df['sales']  # From orderlines
-        df['QUANTITYORDERED'] = df['quantityordered']  # From orderlines
-        df['PRICEEACH'] = df['priceeach']  # From orderlines
-        df['ORDERLINENUMBER'] = df['orderlinenumber']  # From orderlines
-
-        # Drop rows with missing required fields
-        df = df.dropna(subset=['ORDERDATE', 'SALES', 'QUANTITYORDERED', 'PRICEEACH', 'ORDERLINENUMBER'])
+        # Create DataFrame
+        df = pd.DataFrame(records)
 
         # Aggregate per day
         daily_sales = df.groupby('ORDERDATE').agg({
@@ -191,7 +188,7 @@ def fetch_and_process_data():
 
 @app.route("/")
 @conditional_decorator(protector(None), not NOAUTH)
-def main() -> None:
+def main():
     return jsonify(message="Hello world")
 
 @app.route("/forecast", methods=["POST"])
@@ -249,6 +246,34 @@ def forecast():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/chat", methods=["POST"])
+@conditional_decorator(protector(None), not NOAUTH)
+def chat():
+    try:
+        data = request.get_json()
+        if not data or "message" not in data:
+            return jsonify({"error": "Missing 'message' in request body"}), 400
+        
+        message = data["message"]
+        
+        def generate():
+            try:
+                stream = ollama.chat(
+                    model=OLLAMA_MODEL,
+                    messages=[{"role": "user", "content": message}],
+                    stream=True
+                )
+                for chunk in stream:
+                    yield json.dumps({"response": chunk["message"]["content"]}) + "\n"
+            except Exception as e:
+                yield json.dumps({"error": str(e)}) + "\n"
+        
+        return Response(stream_with_context(generate()), content_type='application/json')
+    
+    except Exception as e:
+        print(f"Error in chat endpoint: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=CONTAINER_PORT)
+    app.run(host='0.0.0.0', port=CONTAINER_PORT)
