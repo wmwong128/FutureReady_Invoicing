@@ -1173,6 +1173,42 @@ app.patch('/client/:id', async (req, res) => {
   }
 });
 
+app.get('/followup', async (req, res) => {
+  try {
+    const allInvoicesRaw = await Invoice.find({
+      issueremail: req.user?.email,
+      status: "PENDING",
+      followupnumber: { $ne: 0 }
+    })
+    .sort({ invoicedate: -1 });;
+    const allInvoices: any[] = [];
+
+    for (const invoice of allInvoicesRaw) {
+      const order = await Order.findOne({ ordernumber: invoice.ordernumber });
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const customer = await Customer.findOne({ customerid: order.customerid });
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      const invObj = invoice.toObject() as any;
+      invObj.client = customer.name; 
+      invObj.riskscore = customer.riskscore;
+      invObj.risk = customer.dangerlevel;
+      allInvoices.push(invObj);
+    }
+
+    res.json(allInvoices);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong", details: err });
+  }
+});
+
 app.get(/(.*)/, (_req, res) => {
     res.status(404).send("Page not found. Please check your URL.");
 });

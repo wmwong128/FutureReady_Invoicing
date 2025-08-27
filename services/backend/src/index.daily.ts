@@ -6,7 +6,7 @@ const { connectDB } = require("./models/database");
 const { Invoice, Customer, Order, InvoiceStatus } = require("./models/dbScheme");
 const { sendEmail } = mailing;
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 async function startServer() {
   try {
@@ -65,19 +65,30 @@ const updateInvoiceStatus = async (): Promise<void> => {
 
         if (invoice.payday === 30 || diffDays === 60){
           try {
+            const mailhtml = `
+              <p>Dear ${customer.name},</p>
+              <p>This is a friendly reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>60 days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
+              <p>Please take a moment to review your invoice and ensure payment is arranged in time.</p>
+              <p>You can view and pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">View Invoice</a></p>
+              <p>Thank you for your prompt attention.</p>
+            `;
+
             await sendEmail({
               payload: {
                 to: customer.email,
                 subject: `Reminder: Payment Due for Invoice ${invoice.invoicenumber}`,
-                html: `
-                  <p>Dear ${customer.name},</p>
-                  <p>This is a friendly reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>60 days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
-                  <p>Please take a moment to review your invoice and ensure payment is arranged in time.</p>
-                  <p>You can view and pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">View Invoice</a></p>
-                  <p>Thank you for your prompt attention.</p>
-                `
+                html: mailhtml
               },
             });
+
+            await Invoice.updateOne(
+              { _id: invoice._id },
+              {
+                $set: { followupdate: new Date() },
+                $inc: { followupnumber: 1 }
+              }
+            );
+
           } catch (emailErr) {
             console.error("Failed to send email:", emailErr);
           }
@@ -85,19 +96,30 @@ const updateInvoiceStatus = async (): Promise<void> => {
 
         if (invoice.payday === 60 || diffDays === 30){
           try {
+            const mailhtml = `
+              <p>Dear ${customer.name},</p>
+              <p>This is a reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>30 days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
+              <p>We kindly request that you arrange payment soon to avoid any late fees or service interruptions.</p>
+              <p>You can review and pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">View Invoice</a></p>
+              <p>Thank you for your cooperation.</p>
+            `;
+
             await sendEmail({
               payload: {
                 to: customer.email,
                 subject: `Urgent: Invoice ${invoice.invoicenumber} Due in 30 Days`,
-                html: `
-                  <p>Dear ${customer.name},</p>
-                  <p>This is a reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>30 days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
-                  <p>We kindly request that you arrange payment soon to avoid any late fees or service interruptions.</p>
-                  <p>You can review and pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">View Invoice</a></p>
-                  <p>Thank you for your cooperation.</p>
-                `
+                html: mailhtml
               },
             });
+
+            await Invoice.updateOne(
+              { _id: invoice._id },
+              {
+                $set: { followupdate: new Date() },
+                $inc: { followupnumber: 1 }
+              }
+            );
+
           } catch (emailErr) {
             console.error("Failed to send email:", emailErr);
           }
@@ -105,19 +127,30 @@ const updateInvoiceStatus = async (): Promise<void> => {
 
         if ((invoice.payday && invoice.payday >= 87 && invoice.payday < 90) || diffDays > 0 && diffDays < 3){
           try {
+            const mailhtml =  `
+              <p>Dear ${customer.name},</p>
+              <p>This is the final reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>few days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
+              <p>Please ensure payment is completed before the due date to avoid penalties or service suspension.</p>
+              <p>You can pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">Pay Invoice</a></p>
+              <p>We greatly appreciate your prompt action on this matter.</p>
+            `;
+
             await sendEmail({
               payload: {
-                to: "tengstc@gmail.com",
+                to: customer.email,
                 subject: `Final Notice: Invoice ${invoice.invoicenumber} Due soon`,
-                html: `
-                  <p>Dear ${customer.name},</p>
-                  <p>This is the final reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>5 days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
-                  <p>Please ensure payment is completed before the due date to avoid penalties or service suspension.</p>
-                  <p>You can pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">Pay Invoice</a></p>
-                  <p>We greatly appreciate your prompt action on this matter.</p>
-                `
+                html: mailhtml
               },
             });
+
+            await Invoice.updateOne(
+              { _id: invoice._id },
+              {
+                $set: { followupdate: new Date() },
+                $inc: { followupnumber: 1 }
+              }
+            );
+
           } catch (emailErr) {
             console.error("Failed to send email:", emailErr);
           }
@@ -153,19 +186,29 @@ const updateInvoiceStatus = async (): Promise<void> => {
         }
 
         try {
+          const mailhtml = `
+            <p>Dear ${customer.name},</p>
+            <p>This is a notice that your invoice <strong>${invoice.invoicenumber}</strong> is <strong>due today (${invoice.duedate.toDateString()})</strong>.</p>
+            <p>If you have already made the payment, please disregard this message. Otherwise, we kindly request you to complete the payment immediately to avoid any late fees or service interruptions.</p>
+            <p>You can review and pay your invoice here: <a href="${stripeInvoice.invoice_pdf}">Pay Invoice</a></p>
+            <p>Thank you for your prompt attention to this matter.</p>
+          `;
+
           await sendEmail({
             payload: {
               to: customer.email,
               subject: `Invoice ${invoice.invoicenumber} is Due Today`,
-              html: `
-                <p>Dear ${customer.name},</p>
-                <p>This is a notice that your invoice <strong>${invoice.invoicenumber}</strong> is <strong>due today (${invoice.duedate.toDateString()})</strong>.</p>
-                <p>If you have already made the payment, please disregard this message. Otherwise, we kindly request you to complete the payment immediately to avoid any late fees or service interruptions.</p>
-                <p>You can review and pay your invoice here: <a href="${stripeInvoice.invoice_pdf}">Pay Invoice</a></p>
-                <p>Thank you for your prompt attention to this matter.</p>
-              `
+              html: mailhtml
             },
           });
+
+          await Invoice.updateOne(
+            { _id: invoice._id },
+            {
+              $set: { followupdate: new Date() },
+              $inc: { followupnumber: 1 }
+            }
+          );
 
         } catch (emailErr) {
           console.error("Failed to send email:", emailErr);
