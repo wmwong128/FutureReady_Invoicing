@@ -1,15 +1,29 @@
-FROM alpine:latest
+FROM python:3.11-slim
 
-ARG CONTAINER_PORT=15000
+ARG CONTAINER_PORT=9090
 
 WORKDIR /app
 COPY . .
 
-RUN apk update
-RUN apk add --no-cache python3 py3-pip nodejs npm
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    nodejs \
+    npm \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install
 RUN npm run pyinstall
 
-EXPOSE ${CONTAINER_PORT}
-ENTRYPOINT npm run pystart
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
+# Pull Ollama model
+RUN ollama serve & \
+    sleep 10 && \
+    ollama pull llama3.2:1b
+
+EXPOSE ${CONTAINER_PORT}
+ENTRYPOINT ["npm", "run", "pystart"]
