@@ -34,3 +34,11 @@ urllib3==2.5.0
 Werkzeug==3.1.3
 wsproto==1.2.0
 yarl==1.20.1
+timesfm==1.3.0
+torch==2.1.0
+pandas==2.2.2
+numpy==1.26.4
+tqdm==4.66.4
+pymongo==4.8.0
+jax==0.7.1
+ollama==0.5.3
