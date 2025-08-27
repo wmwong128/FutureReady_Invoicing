@@ -1,28 +1,33 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from metadata import package_data, env
 from authlib.integrations.flask_oauth2 import ResourceProtector
 from token_validator import Auth0JWTBearerTokenValidator
+import os
+os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
+os.environ['JAX_PMAP_USE_TENSORSTORE'] = 'false'
+import timesfm
+import torch
+import pickle
+import json
+import numpy as np
+import pandas as pd
+from pymongo import MongoClient
+from datetime import datetime, timedelta
 
-NAME : str = package_data["name"]
-CONTAINER_PORT : int = package_data["containerPort"]
-AUTH0_DOMAIN : str = env["AUTH0_DOMAIN"]
-AUTH0_AUDIENCE : str = env["AUTH0_AUDIENCE"]
-FRONTEND_MAIN_URL : str = env["FRONTEND_MAIN_URL"]
-NOAUTH : bool = bool(env.get("NOAUTH", False))
-<<<<<<< Updated upstream
-=======
+NAME: str = package_data["name"]
+CONTAINER_PORT: int = package_data["containerPort"]
+AUTH0_DOMAIN: str = env["AUTH0_DOMAIN"]
+AUTH0_AUDIENCE: str = env["AUTH0_AUDIENCE"]
+FRONTEND_MAIN_URL: str = env["FRONTEND_MAIN_URL"]
+NOAUTH: bool = bool(env.get("NOAUTH", False))
 MONGO_URI: str = env.get("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB: str = env.get("MONGO_DB", "futurereadyinvoice")
 MONGO_ORDERS: str = env.get("MONGO_ORDERS", "orders")
->>>>>>> Stashed changes
 
-# Reference from https://auth0.com/docs/quickstart/backend/python/interactive 
+# Auth0 JWT setup
 protector = ResourceProtector()
-validator = Auth0JWTBearerTokenValidator(
-    AUTH0_DOMAIN, 
-    AUTH0_AUDIENCE
-)
+validator = Auth0JWTBearerTokenValidator(AUTH0_DOMAIN, AUTH0_AUDIENCE)
 protector.register_token_validator(validator)
 
 def conditional_decorator(func, condition: bool):
@@ -31,8 +36,6 @@ def conditional_decorator(func, condition: bool):
 app = Flask(__name__)
 CORS(app, origins=FRONTEND_MAIN_URL)
 
-<<<<<<< Updated upstream
-=======
 # Model paths (relative to Docker container)
 CHECKPOINT_DIR = "/app/timesfm_checkpoint"
 EXPORT_DIR = "/app/timesfm_export"
@@ -68,7 +71,7 @@ try:
     try:
         with open(checkpoint_file, "rb") as f:
             pass  # Test read access
-        print(f"Read permissions verified for {checkpoint_file}")
+        print(f"Read permissions verified for {CHECKPOINT_DIR}")
     except PermissionError as e:
         print(f"PermissionError: Cannot read {checkpoint_file}: {e}")
         raise
@@ -88,7 +91,7 @@ try:
     # Load model
     tfm_reloaded = timesfm.TimesFm(
         hparams=timesfm.TimesFmHparams(**hparams_dict),
-        checkpoint=timesfm.TimesFmCheckpoint(path=checkpoint_file),
+        checkpoint=timesfm.TimesFmCheckpoint(path=CHECKPOINT_DIR),
     )
     # Try loading with weights_only=True
     try:
@@ -107,15 +110,15 @@ except Exception as e:
 def fetch_and_process_data():
     try:
         # Connect to MongoDB
-        client = MongoClient(MONGO_URI) 
-        db = client[MONGO_DB] 
-        orders_collection = db[MONGO_ORDERS] 
+        client = MongoClient(MONGO_URI)
+        db = client[MONGO_DB]
+        orders_collection = db[MONGO_ORDERS]
 
-         # Fetch orders
+        # Fetch orders
         orders = list(orders_collection.find())
         if not orders:
             raise ValueError("No orders found in the database")
-        
+
         # Flatten orderlines array
         records = []
         for order in orders:
@@ -132,7 +135,7 @@ def fetch_and_process_data():
         if not records:
             raise ValueError("No orderlines found in orders")
 
-        ## Create DataFrame
+        # Create DataFrame
         df = pd.DataFrame(records)
 
         # Aggregate per day
@@ -143,7 +146,7 @@ def fetch_and_process_data():
             'ORDERLINENUMBER': 'mean'
         })
 
-       # Create complete date range
+        # Create complete date range
         complete_dates = pd.date_range(start=daily_sales.index.min(), end=daily_sales.index.max(), freq='D')
 
         # Reindex and fill missing values
@@ -171,11 +174,66 @@ def fetch_and_process_data():
         print(f"Error fetching/processing data: {e}")
         return None
 
->>>>>>> Stashed changes
 @app.route("/")
 @conditional_decorator(protector(None), not NOAUTH)
-def main() -> None:
+def main():
     return jsonify(message="Hello world")
+
+@app.route("/forecast", methods=["POST"])
+@conditional_decorator(protector(None), not NOAUTH)
+def forecast():
+    if tfm_reloaded is None:
+        return jsonify({"error": "Model not loaded"}), 500
+
+    try:
+        # Fetch and process data from MongoDB
+        complete_sales = fetch_and_process_data()
+        if complete_sales is None or len(complete_sales) < 512:
+            return jsonify({"error": f"Insufficient data: need at least 512 points, got {len(complete_sales) if complete_sales is not None else 0}"}), 400
+
+        context_len = 512
+        horizon_len = 53
+
+        # Prepare input for forecasting
+        inputs = [complete_sales["SALES"][-context_len:].tolist()]
+        dynamic_numerical_covariates = {
+            "quantity_ordered": [complete_sales["QUANTITYORDERED"][-context_len - horizon_len:].tolist()],
+            "price_each": [complete_sales["PRICEEACH"][-context_len - horizon_len:].tolist()],
+            "order_line_number": [complete_sales["ORDERLINENUMBER"][-context_len - horizon_len:].tolist()],
+        }
+        dynamic_categorical_covariates = {
+            "week_day": [complete_sales["WEEKDAY"][-context_len - horizon_len:].tolist()]
+        }
+        dates = complete_sales["ORDERDATE"][-context_len - horizon_len:].dt.strftime("%Y-%m-%d").tolist()
+
+        # Perform forecasting
+        cov_forecast, _ = tfm_reloaded.forecast_with_covariates(
+            inputs=inputs,
+            dynamic_numerical_covariates=dynamic_numerical_covariates,
+            dynamic_categorical_covariates=dynamic_categorical_covariates,
+            static_numerical_covariates={},
+            static_categorical_covariates={},
+            freq=[0] * len(inputs),
+            xreg_mode="xreg + timesfm",
+            ridge=0.0,
+            force_on_cpu=False,
+            normalize_xreg_target_per_input=True,
+        )
+
+        # Generate forecast dates (extend from last date)
+        last_date = pd.to_datetime(complete_sales["ORDERDATE"].iloc[-1])
+        forecast_dates = [last_date + timedelta(days=i) for i in range(1, horizon_len + 1)]
+        forecast_dates = [d.strftime("%Y-%m-%d") for d in forecast_dates]
+
+        # Return forecast
+        forecast_values = cov_forecast[0].tolist()  # Single batch
+        return jsonify({
+            "forecast": forecast_values,
+            "dates": forecast_dates
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=CONTAINER_PORT)
