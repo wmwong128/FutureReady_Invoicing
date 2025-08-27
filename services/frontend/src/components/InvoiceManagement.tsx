@@ -236,7 +236,7 @@ export const InvoiceManagement = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleInvoiceView(invoice._id)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/view`)}>
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/edit`)}>

@@ -9,12 +9,13 @@ import { useEffect, useState } from "react";
 import { ClientCombobox } from "./ClientCombobox";
 import { InvoiceLineItem, type LineItem } from "./InvoiceLineItem";
 import type { NewInvoiceRequest, OrderLine } from "@/data/types/Invoice";
-import { useInvoice } from "@/hooks/useInvoice";
+import { useCreateInvoice, useInvoice } from "@/hooks/useInvoice";
 import type { Customer } from "@/data/types/Customer";
 
 export const InvoiceForm = () => {
     const { id } = useParams<{ id: string }>();
     const { invoiceDetails } = useInvoice(id);
+    const { createInvoice } = useCreateInvoice();
     const navigate = useNavigate();
     const [isEdit, setIsEdit] = useState<boolean>(false);
     const [selectedClient, setSelectedClient] = useState<Customer | null>(null);
@@ -113,6 +114,7 @@ export const InvoiceForm = () => {
                 }))
             }
             console.log(payload)
+            // createInvoice.mutate(payload);
         } else {
             const payload = {
                 invoicenumber: invoiceNumber,

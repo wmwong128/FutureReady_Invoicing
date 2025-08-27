@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 //import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ViewInvoice from "./components/ViewInvoice.tsx";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/new-invoice" element={<Index overrideContent={<InvoiceForm/>} forceTab="invoices"/>} />
             <Route path="/invoice/:id/edit" element={<Index overrideContent={<InvoiceForm/>} forceTab="invoices"/>} />
+            <Route path="/invoice/:id/view" element={<Index overrideContent={<ViewInvoice/>} forceTab="invoices"/>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} /> 
         </Routes>
