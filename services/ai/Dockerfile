@@ -1,15 +1,18 @@
-FROM alpine:latest
+FROM python:3.11-slim
 
-ARG CONTAINER_PORT=15000
+ARG CONTAINER_PORT=9090
 
 WORKDIR /app
 COPY . .
 
-RUN apk update
-RUN apk add --no-cache python3 py3-pip nodejs npm
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
 RUN npm install
 RUN npm run pyinstall
 
 EXPOSE ${CONTAINER_PORT}
-ENTRYPOINT npm run pystart
-
+ENTRYPOINT ["npm", "run", "pystart"]

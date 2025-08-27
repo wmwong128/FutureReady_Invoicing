@@ -3,7 +3,7 @@ const { Invoice, Customer, Order } = require("./dbScheme");
 /**
  * Calculate the risk score of a customer
  * @param customerId The customer ID
- * @returns Risk score between 0 and 1
+ * @returns Risk score between 0 and 100
  */
 async function calculateCustomerRisk(customerId: string): Promise<number> {
   // Step 1: Find all orders for this customer
@@ -22,39 +22,36 @@ async function calculateCustomerRisk(customerId: string): Promise<number> {
     return 0; // No invoices for this customer
   }
 
-  // Step 3: Aggregate values
-  const totalInvoices = invoices.length;
-  const totalInvoiceAmount = invoices.reduce(
-    (sum: number, inv: any) => sum + (inv.totalamount || 0),
-    0
-  );
-  const totalOutstanding = invoices.reduce(
-    (sum: number, inv: any) =>
-      sum + (inv.status === "PENDING" || inv.status === "OVERDUE" ? inv.totalamount || 0 : 0),
-    0
-  );
+  // Step 3: Count outstanding and overdue invoices
+  const outstandingInvoices = invoices.filter((inv: any) => inv.status === "PENDING").length;
   const overdueInvoices = invoices.filter((inv: any) => inv.status === "OVERDUE").length;
-  const overdueAmount = invoices
-    .filter((inv: any) => inv.status === "OVERDUE")
+
+  // Step 4: Calculate outstanding amount (PENDING + OVERDUE)
+  const outstandingAmount = invoices
+    .filter((inv: any) => inv.status === "PENDING" || inv.status === "OVERDUE")
     .reduce((sum: number, inv: any) => sum + (inv.totalamount || 0), 0);
 
-  // Step 4: Ratios
-  const IOR = overdueInvoices / totalInvoices; // Overdue invoice ratio
-  const OR =
-    totalInvoiceAmount > 0 ? totalOutstanding / totalInvoiceAmount : 0; // Outstanding ratio
-  const OAR = totalOutstanding > 0 ? overdueAmount / totalOutstanding : 0; // Overdue share
+  // Step 5: Simple scoring system
+  let riskScore = 0;
+  
+  // Outstanding invoices: +15 points each
+  riskScore += outstandingInvoices * 15;
+  
+  // Overdue invoices: +50 points each
+  riskScore += overdueInvoices * 50;
+  
+  // Outstanding amount: +1 point per 1000
+  riskScore += Math.floor(outstandingAmount / 1000);
 
-  // Step 5: Weighted risk formula
-  const riskScore = 0.5 * IOR + 0.3 * OR + 0.2 * OAR;
-
-  return parseFloat(riskScore.toFixed(3));
+  // Cap at 100
+  return Math.min(riskScore, 100);
 }
 
 /**
  * Get risk level (normal, high)
  */
 function getRiskLevel(score: number): "NORMAL" | "HIGH" {
-  if (score < 0.6) return "NORMAL";
+  if (score < 60) return "NORMAL";
   return "HIGH";
 }
 
