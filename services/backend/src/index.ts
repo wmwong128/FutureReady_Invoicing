@@ -74,7 +74,7 @@ async function startServer() {
   }
 }
 
-// app.use(requireAuth);
+app.use(requireAuth);
 
 // if (NOAUTH) { 
 //   app.use((req, _res, next) => { 
