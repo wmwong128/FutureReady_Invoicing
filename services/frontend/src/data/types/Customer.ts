@@ -1,6 +1,6 @@
 export interface Customer {
     _id?: string;
-    customerid?: string;
+    customerid: string;
     stripeCustomerId?: string;
     name?: string;
     phone?: string;
@@ -15,9 +15,9 @@ export interface Customer {
     contactlastname?: string;
     contactfirstname?: string;
     dangerlevel?: string;
-    totalrevenue?: number;
-    totalinvoices?: number;
-    totaloutstanding?: number;
-    averageday?: number;
+    totalrevenue: number;
+    totalinvoices: number;
+    totaloutstanding: number;
+    averageday: number;
     updatedAt?: string;
 }

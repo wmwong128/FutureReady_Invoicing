@@ -80,7 +80,7 @@ if (NOAUTH) {
     next();
   });
 } else {
-  app.use(requireAuth);
+  // app.use(requireAuth);
 
   // map Auth0 -> req.user
   app.use((req, _res, next) => {
