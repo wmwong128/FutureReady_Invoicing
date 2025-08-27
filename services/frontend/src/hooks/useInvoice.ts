@@ -1,12 +1,20 @@
-import type { Invoice, InvoiceDetailsResponse, InvoiceReponse, InvoiceStats, NewInvoiceRequest } from "@/data/types/Invoice";
+import type { Invoice, InvoiceDetailsResponse, InvoiceReponse, InvoiceStats } from "@/data/types/Invoice";
 import useMachine from "./useMachine";
 import { useCallback } from "react";
-// import useMachineMutation from "./useMachineMutation";
+import useMachineMutation from "./useMachineMutation";
 import type { UseM2MAuthOptions } from "./useM2MAuth";
 import useM2MAuth from "./useM2MAuth";
+import { useAuth0 } from "@auth0/auth0-react";
+
+const BASE_URL = `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice`;
+
 export function useInvoiceManagement() {
+    const { user } = useAuth0()
     const query = useMachine({
-        url: `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice`,
+        url: `${BASE_URL}?issueremail=${user?.email}`,
+        queryOptions: {
+            queryKey: ["invoiceManagement", user?.email],
+        }
     });
     const data = query.data as InvoiceReponse;
 
@@ -23,7 +31,7 @@ export function useInvoiceManagement() {
 
 export function useInvoice(id?: string) {
     const query = useMachine({
-        url: id ? `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice/${id}` : "",
+        url: id ? `${BASE_URL}/${id}` : "",
         queryOptions: {
             queryKey: ["invoice", id],
             enabled: !!id,
@@ -52,7 +60,7 @@ export function useInvoiceStripeView(m2mAuthOptions?: UseM2MAuthOptions) {
     const viewInvoicePDF = useCallback(async (id: string) => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice/${id}/stripepreview`,
+                `${BASE_URL}/${id}/stripepreview`,
                 {
                     method: "GET",
                     headers: {
@@ -74,11 +82,29 @@ export function useInvoiceStripeView(m2mAuthOptions?: UseM2MAuthOptions) {
     return { viewInvoicePDF };
 }
 
-// export function useCreateInvoice() {
-//     const createInvoice = useMachineMutation({
-//         url: `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice`,
-//         method: "POST",
-//     });
+export function useCreateInvoice() {
+    const createInvoice = useMachineMutation({
+        url: BASE_URL,
+        method: "POST",
+    });
 
-//     return { createInvoice };
-// }
+    return { createInvoice };
+}
+
+export function useUpdateInvoice(id?: string) {
+    const updateInvoice = useMachineMutation({
+        url: `${BASE_URL}/${id}`,
+        method: "PATCH",
+    });
+
+    return { updateInvoice };
+}
+
+export function useSendInvoice(id?: string) {
+    const sendInvoice = useMachineMutation({
+        url: `${BASE_URL}/${id}/send`,
+        method: "POST",
+    });
+
+    return { sendInvoice };
+}

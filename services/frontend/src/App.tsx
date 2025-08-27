@@ -7,12 +7,13 @@ import LoginButton from './components/Login';
 import LogoutButton from './components/Logout';
 import Profile from './components/Profile';
 import useMachine from './hooks/useMachine';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 //import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ViewInvoice from "./components/ViewInvoice.tsx";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,13 @@ function App() {
   const aiMachine = useMachine({
     url: import.meta.env.VITE_AI_MAIN_URL,
   });
+  const { isAuthenticated, loginWithRedirect, isLoading } = useAuth0();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      loginWithRedirect();
+    }
+  }, [isLoading, isAuthenticated, loginWithRedirect])
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -42,13 +50,13 @@ function App() {
         </Routes>
         
           
-      {/*    
-      <Profile></Profile>
+         
+      {/* <Profile></Profile>
       <LoginButton></LoginButton>
-      <LogoutButton></LogoutButton>
+      <LogoutButton></LogoutButton> */}
     
       
-      <h2>Backend Service Data: </h2>
+      {/* <h2>Backend Service Data: </h2>
       {backendMachine.data}
       <h2>AI Service Data: </h2>
       {aiMachine.data} */}

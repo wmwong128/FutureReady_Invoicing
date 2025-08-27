@@ -109,7 +109,8 @@ app.get('/', async (req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const invoices = await Invoice.find({ issueremail: req.user?.email });
+    const { issueremail } = req.query
+    const invoices = await Invoice.find({ issueremail: issueremail });
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -196,7 +197,8 @@ app.listen(containerPort, () => {
 // Invoice dashboard
 app.get('/invoice', async (req, res) => {
   try {
-    const allInvoicesRaw  = await Invoice.find({issueremail: req.user?.email});
+    const { issueremail } = req.query
+    const allInvoicesRaw  = await Invoice.find({issueremail: issueremail});
     const allInvoices: any[] = [];
 
     for (const invoice of allInvoicesRaw) {
@@ -379,7 +381,7 @@ interface InvoiceData {
       ordernumber: order.ordernumber,
       invoicenumber: invoiceData.invoicenumber,
       invoicedate: invoiceDate,
-      issueremail: req.user?.email ?? "",
+      issueremail: invoiceData.issueremail,
       duedate: invoiceDue
     };
 
