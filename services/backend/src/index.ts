@@ -74,34 +74,28 @@ async function startServer() {
   }
 }
 
-if (NOAUTH) {
-  app.use((req, _res, next) => {
-    req.user = { email: "abcd@gmail.com" };
-    next();
-  });
-} else {
-  app.use(requireAuth);
+// app.use(requireAuth);
 
-  // map Auth0 -> req.user
-  app.use((req, _res, next) => {
-    if (req.auth?.payload) {
-      req.user = {
-        email: req.auth.payload.email ?? undefined,
-      };
-    }
-    next();
-  });
-}
-
-// app.use((req, _res, next) => {
-//   req.user = { email: "halo@gmail.com" };
-//   next();
-// });
+// if (NOAUTH) { 
+//   app.use((req, _res, next) => { 
+//     req.user = { email: "abcd@gmail.com" }; 
+//     next(); 
+//   }); 
+// } else { 
+//   // map Auth0 -> req.user 
+//   app.use((req, _res, next) => { 
+//     if (req.auth?.payload) { 
+//       req.user = { 
+//         email: req.auth.payload.email ?? undefined, 
+//       }; 
+//     } next(); 
+//   }); 
+// }
 
 app.use(errorHandler);
 startServer();
 
-app.get('/', async (req, res) => {
+app.get('/:issueremail', async (req, res) => {
   try{
     const now = new Date();
     const thirtyDaysAgo = new Date();
@@ -109,7 +103,8 @@ app.get('/', async (req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const invoices = await Invoice.find({ issueremail: req.user?.email });
+    const issueremail = req.params.issueremail
+    const invoices = await Invoice.find({ issuerEmail: issueremail });
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -194,9 +189,11 @@ app.listen(containerPort, () => {
 });
 
 // Invoice dashboard
-app.get('/invoice', async (req, res) => {
+app.get('/invoice/:issueremail', async (req, res) => {
   try {
-    const allInvoicesRaw  = await Invoice.find({issueremail: req.user?.email});
+    const issueremail = req.params.issueremail
+    const allInvoicesRaw = await Invoice.find({ issuerEmail: issueremail });
+
     const allInvoices: any[] = [];
 
     for (const invoice of allInvoicesRaw) {
@@ -284,18 +281,8 @@ app.get('/invoice', async (req, res) => {
   }
 });
 
-// Invoice new form
-app.get("/invoice/new", (_req,res) => {
-  try {
-    // Render new client form
-    res.json("new invoice form");
-  } catch (err) {
-    res.status(500).json({ error: "Something went wrong", details: err });
-  }
-});
-
 // Invoice manual create
-app.post('/invoice', async (req, res) => {
+app.post('/invoice/:issueremail', async (req, res) => {
   let stripeInvoice = null;
   let stripeCustomer = null;
   let createdInvoiceItems = [];
@@ -373,13 +360,15 @@ interface InvoiceData {
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
-    
+
+    const issueremail = req.params.issueremail
+
     // Creating new invoice in db
     const newInvoiceData: Partial<IInvoice> = {
       ordernumber: order.ordernumber,
       invoicenumber: invoiceData.invoicenumber,
       invoicedate: invoiceDate,
-      issueremail: req.user?.email ?? "",
+      issueremail: issueremail,
       duedate: invoiceDue
     };
 
@@ -493,10 +482,6 @@ interface InvoiceData {
       createdInvoiceItems.push(taxItem.id);
     }
 
-    // if (newInvoice.status !== 'DRAFT') {
-    //   await stripe.invoices.finalizeInvoice(stripeInvoice.id);
-    // }
-
     // After get the stripe id, update in db
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       newInvoice._id,
@@ -565,13 +550,18 @@ interface InvoiceData {
 });
 
 // Invoice read/view (id)
-app.get("/invoice/:id", async (req, res) => {
+app.get("/invoice/:issueremail/:id", async (req, res) => {
   try {
     const invoiceId = req.params.id; 
+    const issueremail = req.params.issueremail
+
     const invoice = await Invoice.findById(invoiceId);
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
     };
+    if (invoice.issueremail != issueremail){
+      return res.status(500).json({ error: "Not your invoice" });
+    }
     const order = await Order.findOne({ ordernumber: invoice.ordernumber });
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -593,7 +583,7 @@ app.get("/invoice/:id", async (req, res) => {
 });
 
 // Invoice update (id, draft)
-app.patch("/invoice/:id", async (req, res) => {
+app.patch("/invoice/:issueremail/:id", async (req, res) => {
   let stripeInvoice = null;
   let createdInvoiceItems = [];
   let deletedStripeInvoiceId = null;
@@ -601,7 +591,7 @@ app.patch("/invoice/:id", async (req, res) => {
   
   try {
     const invoiceId = req.params.id;
-    const updateData = req.body;
+    const { issueremail, ...updateData } = req.body;
 
     // Start transaction
     await session.startTransaction();
@@ -609,6 +599,9 @@ app.patch("/invoice/:id", async (req, res) => {
     const existingInvoice = await Invoice.findById(invoiceId).session(session);
     if (!existingInvoice) {
       return res.status(404).json({ error: "Invoice not found" });
+    }
+    if (existingInvoice.issueremail != issueremail){
+      return res.status(500).json({ error: "Not your invoice" });
     }
     if (!existingInvoice.totalamount) {
       return res.status(400).json({ error: "Invoice total amount is missing or invalid" });
@@ -856,7 +849,7 @@ app.patch("/invoice/:id", async (req, res) => {
 });
 
 // Invoice delete (id, draft)
-app.delete("/invoice/:id", async (req, res) => {
+app.delete("/invoice/:issueremail/:id", async (req, res) => {
   const session = await mongoose.startSession();
   let deletedInvoice = null;
   
@@ -866,10 +859,15 @@ app.delete("/invoice/:id", async (req, res) => {
     // Start transaction
     await session.startTransaction();
 
+    const issueremail = req.params.issueremail
+
     const invoice = await Invoice.findById(invoiceId).session(session);
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
     };
+    if (invoice.issueremail != issueremail){
+      return res.status(500).json({ error: "Not your invoice" });
+    }
     if (!invoice.totalamount) {
       return res.status(400).json({ error: "Invoice total amount is missing or invalid" });
     }
@@ -966,12 +964,17 @@ app.delete("/invoice/:id", async (req, res) => {
 });
 
 // Get Stripe invoice view
-app.get("/invoice/:id/stripepreview", async (req, res) => {
+app.get("/invoice/:issueremail/:id/stripepreview", async (req, res) => {
   try {
     const invoiceId = req.params.id;
+    const issueremail = req.params.issueremail
+
     const invoice = await Invoice.findById(invoiceId);
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
+    }
+    if (invoice.issueremail != issueremail){
+      return res.status(500).json({ error: "Not your invoice" });
     }
 
     const stripeInvoiceId = invoice.stripeinvoiceid;
@@ -1016,12 +1019,13 @@ app.get("/invoice/:id/stripepreview", async (req, res) => {
   }
 });
 
-app.post("/invoice/:id/send", async (req, res) => {
+app.post("/invoice/:issueremail/:id/send", async (req, res) => {
   let stripeInvoice = null;
   const session = await mongoose.startSession();
   
   try {
     const invoiceId = req.params.id;
+    const issueremail = req.params.issueremail
 
     // Transaction rollback
     await session.startTransaction();
@@ -1029,10 +1033,13 @@ app.post("/invoice/:id/send", async (req, res) => {
     const dbInvoice = await Invoice.findById(invoiceId).session(session);
     if (!dbInvoice) {
       return res.status(404).json({ error: "Invoice not found" });
-    }
+    };
+    if (dbInvoice.issueremail != issueremail){
+      return res.status(500).json({ error: "Not your invoice" });
+    };
     if (!dbInvoice.stripeinvoiceid) {
       return res.status(400).json({ error: "No Stripe invoice ID found" });
-    }
+    };
 
     stripeInvoice = await stripe.invoices.finalizeInvoice(dbInvoice.stripeinvoiceid);
 
@@ -1044,7 +1051,7 @@ app.post("/invoice/:id/send", async (req, res) => {
 
     if (!updatedInvoice) {
       throw new Error("Invoice update failed");
-    }
+    };
 
     try {
       await sendEmail({
@@ -1057,7 +1064,7 @@ app.post("/invoice/:id/send", async (req, res) => {
       });
     } catch (emailErr) {
       console.error("Failed to send email:", emailErr);
-    }
+    };
 
     await session.commitTransaction();
 
@@ -1068,7 +1075,7 @@ app.post("/invoice/:id/send", async (req, res) => {
     const customer = await Customer.findOne({ customerid: order.customerid });
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
-    }
+    };
 
     const riskScore = await calculateCustomerRisk(customer.customerid);
     const riskLevel = getRiskLevel(riskScore);
@@ -1173,14 +1180,14 @@ app.patch('/client/:id', async (req, res) => {
   }
 });
 
-app.get('/followup', async (req, res) => {
+app.get('/followup/:issueremail', async (req, res) => {
   try {
     const allInvoicesRaw = await Invoice.find({
-      issueremail: req.user?.email,
+      issueremail: req.params.issueremail,
       status: "PENDING",
-      followupnumber: { $ne: 0 }
+      followupstage: { $ne: 0 }
     })
-    .sort({ invoicedate: -1 });;
+    .sort({ followupdate: -1 });;
     const allInvoices: any[] = [];
 
     for (const invoice of allInvoicesRaw) {
