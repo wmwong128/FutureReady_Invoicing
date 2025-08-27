@@ -15,6 +15,7 @@ interface InvoiceLineItemProps {
     onRemove: (id: string) => void;
     canRemove: boolean;
     lineTotal: number;
+    disabled: boolean;
 }
 
 export const InvoiceLineItem = ({
@@ -22,7 +23,8 @@ export const InvoiceLineItem = ({
     onUpdate,
     onRemove,
     canRemove,
-    lineTotal
+    lineTotal,
+    disabled
 }: InvoiceLineItemProps) => {
     return (
         <div className="grid grid-cols-12 gap-4 items-center p-4 border border-border rounded-lg">
@@ -33,6 +35,7 @@ export const InvoiceLineItem = ({
                     value={item.name}
                     onChange={(e) => onUpdate(item.id, "name", e.target.value)}
                     required
+                    disabled={disabled}
                 />
             </div>
 
@@ -44,8 +47,9 @@ export const InvoiceLineItem = ({
                     value={item.quantity || ""}
                     onChange={(e) => onUpdate(item.id, "quantity", parseFloat(e.target.value) || 0)}
                     min="0"
-                    step="0.01"
+                    step="1"
                     required
+                    disabled={disabled}
                 />
             </div>
 
@@ -59,6 +63,7 @@ export const InvoiceLineItem = ({
                     min="0"
                     step="0.01"
                     required
+                    disabled={disabled}
                 />
             </div>
 
@@ -76,7 +81,7 @@ export const InvoiceLineItem = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemove(item.id)}
-                    disabled={!canRemove}
+                    disabled={!canRemove || disabled}
                     className="p-2"
                 >
                     <Trash2 className="h-4 w-4" />
