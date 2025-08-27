@@ -21,15 +21,22 @@ const app = express();
 const mongoose = require('mongoose');
 const { connectDB } = require("./models/database");
 const { Invoice, Customer, Order } = require("./models/dbScheme");
-// const { Invoice, Customer, Order } = schemas;
 const { sendEmail } = mailing;
 const { calculateCustomerRisk, getRiskLevel } = require("./models/threshold");
+const webhookRouter = require("./routes/webhook");
+// const { Invoice, Customer, Order } = schemas;
+// const paymentRouter = require("./routes/payment");
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Middleware for db
-app.use(express.json()); 
+// mount raw webhook route
+app.use("/webhook/stripe", webhookRouter);
+
+// JSON parser for normal routes
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// app.use("/payment", paymentRouter);
 
 const authOptions = {
   audience: AUTH0_AUDIENCE,
@@ -87,7 +94,7 @@ if (NOAUTH) {
 }
 
 // app.use((req, _res, next) => {
-//   req.user = { email: "test2@gmail.com" };
+//   req.user = { email: "halo@gmail.com" };
 //   next();
 // });
 
@@ -1053,6 +1060,30 @@ app.post("/invoice/:id/send", async (req, res) => {
     }
 
     await session.commitTransaction();
+
+    const order = await Order.findOne({ ordernumber: dbInvoice.ordernumber });
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const customer = await Customer.findOne({ customerid: order.customerid });
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const riskScore = await calculateCustomerRisk(customer.customerid);
+    const riskLevel = getRiskLevel(riskScore);
+
+    // Update the danger level of the customer
+    await Customer.findOneAndUpdate(
+      { customerid: order.customerid },
+      { 
+        $set: { 
+          riskscore: riskScore,
+          dangerlevel: riskLevel
+        }
+      },
+      { new: true, session }
+    );
     
     res.json({
       message: "Invoice finalized on Stripe and status updated",
@@ -1136,6 +1167,42 @@ app.patch('/client/:id', async (req, res) => {
       message: "Customer updated successfully",
       customer: updatedCustomer
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong", details: err });
+  }
+});
+
+app.get('/followup', async (req, res) => {
+  try {
+    const allInvoicesRaw = await Invoice.find({
+      issueremail: req.user?.email,
+      status: "PENDING",
+      followupnumber: { $ne: 0 }
+    })
+    .sort({ invoicedate: -1 });;
+    const allInvoices: any[] = [];
+
+    for (const invoice of allInvoicesRaw) {
+      const order = await Order.findOne({ ordernumber: invoice.ordernumber });
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const customer = await Customer.findOne({ customerid: order.customerid });
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      const invObj = invoice.toObject() as any;
+      invObj.client = customer.name; 
+      invObj.riskscore = customer.riskscore;
+      invObj.risk = customer.dangerlevel;
+      allInvoices.push(invObj);
+    }
+
+    res.json(allInvoices);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong", details: err });

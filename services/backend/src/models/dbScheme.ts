@@ -53,6 +53,8 @@ interface IInvoice extends Document {
   paymentmethod?: PaymentMethod;
   paymentdate?: Date;
   payday?: number;
+  followupdate?: Date;
+  followupnumber?: number;
   notes?: string;
 }
 
@@ -397,6 +399,16 @@ const invoicesSchema = new Schema<IInvoice>(
       default: null
     },
     payday: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    followupdate: {
+      type: Date,
+      required: false,
+      default: null
+    },
+    followupnumber: {
       type: Number,
       required: false,
       default: 0
