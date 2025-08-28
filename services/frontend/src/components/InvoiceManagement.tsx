@@ -76,10 +76,10 @@ export const InvoiceManagement = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                    <Button variant="outline">
+                    {/* <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" />
                         Export
-                    </Button>
+                    </Button> */}
                     <Button variant="default" onClick={() => navigate("/new-invoice")}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Invoice
