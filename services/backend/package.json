@@ -10,7 +10,7 @@
     "serve": "npm run compile && node ./dist/scripts/serve.js",
     "dev": "nodemon --exec 'npm run compile && npm run start'",
     "dev1": "nodemon --watch src --exec \"tsc && node ./dist/index.js\"",
-    "dev-noauth": "NOAUTH=true npm run dev",
+    "dev-noauth": "cross-env NOAUTH=true npm run dev1",
     "dev-daily": "npm run compile && npm run daily"
   },
   "keywords": [],
@@ -23,11 +23,13 @@
     "@types/express": "^5.0.3",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^24.3.0",
+    "cross-env": "^10.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "axios": "^1.11.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
