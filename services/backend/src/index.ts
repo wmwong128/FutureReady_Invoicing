@@ -158,7 +158,7 @@ app.get('/', async (req, res) => {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/predict", {
+      const response = await axios.get("http://localhost:5000/api/predict", { // Waiting Eric
         timeout: 3000,
       });
       predictionData = response.data;
