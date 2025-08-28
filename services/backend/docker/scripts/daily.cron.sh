@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /etc/profile
+
 LOG_PATH="/var/log/app.daily.log"
 APP_DIRECTORY="${WORKING_DIRECTORY:-/app}"
 
