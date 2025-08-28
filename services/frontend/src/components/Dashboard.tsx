@@ -44,7 +44,7 @@ export const Dashboard = () => {
                                 "flex items-center space-x-1", 
                                 (dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? "text-success" : "text-destructive"
                             )}>
-                                {dashboardData.mrr.percentagerevenue >= 0 ? 
+                                {(dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? 
                                     (<TrendingUp className="h-3 w-3" />) : (<TrendingDown className="h-3 w-3" />)
                                 }
                                 <span>{Math.abs(dashboardData?.mrr?.percentagerevenue)}%</span>
