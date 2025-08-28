@@ -95,7 +95,7 @@ app.use(requireAuth);
 app.use(errorHandler);
 startServer();
 
-app.get('/:issueremail', async (req, res) => {
+app.get('/', async (req, res) => {
   try{
     const now = new Date();
     const thirtyDaysAgo = new Date();
@@ -103,8 +103,8 @@ app.get('/:issueremail', async (req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const issueremail = req.params.issueremail
-    const invoices = await Invoice.find({ issuerEmail: issueremail });
+    // const issueremail = req.params.issueremail
+    const invoices = await Invoice.find({});
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
