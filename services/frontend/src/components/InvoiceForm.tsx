@@ -9,12 +9,16 @@ import { useEffect, useState } from "react";
 import { ClientCombobox } from "./ClientCombobox";
 import { InvoiceLineItem, type LineItem } from "./InvoiceLineItem";
 import type { NewInvoiceRequest, OrderLine } from "@/data/types/Invoice";
-import { useInvoice } from "@/hooks/useInvoice";
+import { useCreateInvoice, useInvoice, useUpdateInvoice } from "@/hooks/useInvoice";
 import type { Customer } from "@/data/types/Customer";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export const InvoiceForm = () => {
     const { id } = useParams<{ id: string }>();
     const { invoiceDetails } = useInvoice(id);
+    const { createInvoice } = useCreateInvoice();
+    const { updateInvoice } = useUpdateInvoice(id);
+    const { user } = useAuth0();
     const navigate = useNavigate();
     const [isEdit, setIsEdit] = useState<boolean>(false);
     const [selectedClient, setSelectedClient] = useState<Customer | null>(null);
@@ -100,7 +104,7 @@ export const InvoiceForm = () => {
             return;
         }
         setIsLoading(true)
-        if (!isEdit) {
+        if (!isEdit && !!user?.email) {
             const payload: NewInvoiceRequest = {
                 client: selectedClient.name ?? "",
                 invoicenumber: invoiceNumber,
@@ -110,9 +114,19 @@ export const InvoiceForm = () => {
                     productline: item.name,
                     quantityordered: item.quantity,
                     priceeach: item.unitPrice,
-                }))
+                })),
+                issueremail: user.email,
             }
-            console.log(payload)
+            createInvoice.mutate(
+                payload,
+                {
+                    onSuccess: () => {
+                        setIsLoading(false);
+                        alert(`Invoice created`);
+                        navigate("/");
+                    }
+                }
+            );
         } else {
             const payload = {
                 invoicenumber: invoiceNumber,
@@ -131,6 +145,16 @@ export const InvoiceForm = () => {
                 }
             }
             console.log(payload)
+            updateInvoice.mutate(
+                payload,
+                {
+                    onSuccess: () => {
+                        setIsLoading(false);
+                        alert("Invoice updated");
+                        navigate("/");
+                    }
+                }
+            )
         }
     };
 
@@ -219,7 +243,7 @@ export const InvoiceForm = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={addLineItem}
-                                    disabled={isLoading}
+                                    disabled={isLoading || isEdit}
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Add Item

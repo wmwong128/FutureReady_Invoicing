@@ -7,16 +7,19 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
-import { useInvoiceManagement, useInvoiceStripeView } from "@/hooks/useInvoice";
+import { useInvoiceManagement, useInvoiceStripeView, useSendInvoice } from "@/hooks/useInvoice";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const InvoiceManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchTermDraft, setSearchTermDraft] = useState("");
-    const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
+    const [sendInvoiceId, setSendInvoiceId] = useState<string>("");
     const navigate = useNavigate();
 
     const { stats, invoices, draftInvoices } = useInvoiceManagement();
     const { viewInvoicePDF } = useInvoiceStripeView();
+    const { sendInvoice } = useSendInvoice(sendInvoiceId);
+    const queryClient = useQueryClient();
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -51,9 +54,16 @@ export const InvoiceManagement = () => {
         (invoice.invoicenumber ?? "").toLowerCase().includes(searchTermDraft.toLowerCase())
     ) ?? [];
 
-    const handleInvoiceView = (id: string) => {
-        setViewInvoiceId(id);
-        console.log(viewInvoiceId);
+    function handleInvoiceSend(id: string) {
+        setSendInvoiceId(id);
+        sendInvoice.mutate({},
+            {
+                onSuccess: () => {
+                    alert(`Invoice sent`);
+                    queryClient.invalidateQueries(["invoiceManagement"]);
+                }
+            }
+        );
     }
 
     return (
@@ -236,13 +246,13 @@ export const InvoiceManagement = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleInvoiceView(invoice._id)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/view`)}>
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/edit`)}>
                                                 <Edit className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleInvoiceSend(invoice._id)}>
                                                 <Send className="h-4 w-4" />
                                             </Button>
                                         </div>
