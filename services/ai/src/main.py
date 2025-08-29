@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
-from metadata import package_data, env
+from metadata import package_data, env, package_directory
 from authlib.integrations.flask_oauth2 import ResourceProtector
 from token_validator import Auth0JWTBearerTokenValidator
 from pymongo import MongoClient
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from datetime import datetime, timedelta
-import ollama
+import requests
 from contextlib import contextmanager
 from flask import stream_with_context
 
@@ -28,14 +28,11 @@ NOAUTH: bool = bool(env.get("NOAUTH", False))
 MONGO_URI: str = env.get("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB: str = env.get("MONGO_DB", "futurereadyinvoice")
 MONGO_ORDERS: str = env.get("MONGO_ORDERS", "orders")
+OLLAMA_HOST: str = env.get("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_MODEL: str = "llama3.2:1b"
 
 # Initialize Ollama model
 OLLAMA_MODEL = "llama3.2:1b"
-try:
-    ollama.pull(OLLAMA_MODEL)  # Pull model at startup
-    print(f"Successfully pulled Ollama model {OLLAMA_MODEL}")
-except Exception as e:
-    print(f"Error pulling Ollama model {OLLAMA_MODEL}: {e}")
 
 # Auth0 JWT setup
 protector = ResourceProtector()
@@ -49,10 +46,11 @@ app = Flask(__name__)
 CORS(app, origins=FRONTEND_MAIN_URL)
 
 # Model paths (relative to Docker container)
-CHECKPOINT_DIR = "/app/times_checkpoint"
-EXPORT_DIR = "/app/timesfm_export"
+CHECKPOINT_DIR = os.path.join(package_directory, "times_checkpoint")
+EXPORT_DIR = os.path.join(package_directory, "timesfm_export")
 model_weights_path = os.path.join(EXPORT_DIR, "timesfm_model.pt")
 config_path = os.path.join(EXPORT_DIR, "timesfm_config.json")
+checkpoint_file = os.path.join(CHECKPOINT_DIR, "torch_model.ckpt")
 
 # Load TimesFM model at startup
 tfm_reloaded = None
@@ -77,7 +75,6 @@ try:
         raise
 
     # Verify checkpoint
-    checkpoint_file = os.path.join(CHECKPOINT_DIR, "torch_model.ckpt")
     if not os.path.exists(checkpoint_file):
         raise FileNotFoundError(f"Checkpoint file {checkpoint_file} not found")
     try:
@@ -191,7 +188,7 @@ def fetch_and_process_data():
 def main():
     return jsonify(message="Hello world")
 
-@app.route("/forecast", methods=["POST"])
+@app.route("/forecast", methods=["GET"])
 @conditional_decorator(protector(None), not NOAUTH)
 def forecast():
     if tfm_reloaded is None:
@@ -254,23 +251,28 @@ def chat():
         data = request.get_json()
         if not data or "message" not in data:
             return jsonify({"error": "Missing 'message' in request body"}), 400
-        
+
         message = data["message"]
-        
-        def generate():
-            try:
-                stream = ollama.chat(
-                    model=OLLAMA_MODEL,
-                    messages=[{"role": "user", "content": message}],
-                    stream=True
-                )
-                for chunk in stream:
-                    yield json.dumps({"response": chunk["message"]["content"]}) + "\n"
-            except Exception as e:
-                yield json.dumps({"error": str(e)}) + "\n"
-        
-        return Response(stream_with_context(generate()), content_type='application/json')
-    
+        url = f"{OLLAMA_HOST}/api/chat"
+        payload = {
+            "model": OLLAMA_MODEL,
+            "messages": [{"role": "user", "content": message}],
+            "stream": False
+        }
+
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            json_data = response.json()
+            if "message" in json_data and "content" in json_data["message"]:
+                return jsonify({"response": json_data["message"]["content"]})
+            else:
+                return jsonify({"error": "Invalid response format from Ollama"}), 400
+        except requests.RequestException as e:
+            return jsonify({"error": f"Failed to connect to Ollama: {str(e)}"}), 500
+        except json.JSONDecodeError:
+            return jsonify({"error": "Failed to parse response from Ollama"}), 500
+
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
         return jsonify({"error": str(e)}), 500
