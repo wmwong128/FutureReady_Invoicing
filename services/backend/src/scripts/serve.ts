@@ -36,7 +36,7 @@ execSync(
 );
 
 execSync(
-  `docker run -d -p ${hostPort}:${containerPort} --name ${containerName} ${imageTag}`,
+  `docker run -d -p ${hostPort}:${containerPort} --privileged --name ${containerName} ${imageTag}`,
   {
     ...execSyncOptions,
     stdio: 'inherit',

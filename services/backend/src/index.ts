@@ -24,6 +24,7 @@ const { Invoice, Customer, Order } = require("./models/dbScheme");
 const { sendEmail } = mailing;
 const { calculateCustomerRisk, getRiskLevel } = require("./models/threshold");
 const webhookRouter = require("./routes/webhook");
+const axios = require("axios");
 // const { Invoice, Customer, Order } = schemas;
 // const paymentRouter = require("./routes/payment");
 
@@ -95,7 +96,7 @@ app.use(requireAuth);
 app.use(errorHandler);
 startServer();
 
-app.get('/:issueremail', async (req, res) => {
+app.get('/', async (req, res) => {
   try{
     const now = new Date();
     const thirtyDaysAgo = new Date();
@@ -103,8 +104,8 @@ app.get('/:issueremail', async (req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const issueremail = req.params.issueremail
-    const invoices = await Invoice.find({ issuerEmail: issueremail });
+    // const issueremail = req.params.issueremail
+    const invoices = await Invoice.find({});
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -115,6 +116,7 @@ app.get('/:issueremail', async (req, res) => {
     let totaloverdue = 0;
     let percentagerevenue = 0;
     let debt = 0;
+    let predictionData = null;
 
     const revenueTrend: { month: string; actual: number }[] = [];
 
@@ -155,6 +157,15 @@ app.get('/:issueremail', async (req, res) => {
       }
     }
 
+    try {
+      const response = await axios.get("http://localhost:5000/api/predict", { // Waiting Eric
+        timeout: 3000,
+      });
+      predictionData = response.data;
+    } catch (err) {
+      console.warn("Python service not reachable:", err);
+    }
+
     const monthlyRevenueBoard = {monthlyrevenue, percentagerevenue};
     const invoiceStatusList = {totaloverdue, totalunpaid, totalpaid};
 
@@ -173,7 +184,10 @@ app.get('/:issueremail', async (req, res) => {
       revenuetrend: revenueTrend
     };
 
-    res.json(dashboard);
+    res.json({
+      dashboard: dashboard,
+      forecast: predictionData ?? { message: "Forecast service unavailable" },
+    });
 
   }
   catch (err) {
@@ -288,20 +302,21 @@ app.post('/invoice/:issueremail', async (req, res) => {
   let createdInvoiceItems = [];
 
   interface InvoiceOrderLine {
-  productline: string;
-  productcode?: number;
-  quantityordered: number;
-  priceeach: number;
-}
+    productline: string;
+    productcode?: number;
+    quantityordered: number;
+    priceeach: number;
+  }
 
-interface InvoiceData {
-  invoicenumber: string;
-  issueremail: string;
-  client: string;
-  invoicedate: string;
-  duedate: string;
-  orderlines: InvoiceOrderLine[];
-}
+  interface InvoiceData {
+    invoicenumber: string;
+    issueremail: string;
+    client: string;
+    invoicedate: string;
+    duedate: string;
+    orderlines: InvoiceOrderLine[];
+  }
+
   const session = await mongoose.startSession();
   
   try {
@@ -1177,6 +1192,283 @@ app.patch('/client/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong", details: err });
+  }
+});
+
+// app.get('/order', async (_req, res) => {
+  
+// });
+
+app.post('/order', async (req, res) => {
+
+  let stripeInvoice = null;
+  let stripeCustomer = null;
+  let createdInvoiceItems = [];
+
+  interface InvoiceOrderLine {
+    productline: string;
+    productcode?: number;
+    quantityordered: number;
+    priceeach: number;
+  }
+
+  interface InvoiceData {
+    invoicenumber: string;
+    issueremail: string;
+    client: string;
+    invoicedate: string;
+    duedate: string;
+    orderlines: InvoiceOrderLine[];
+  }
+
+  const session = await mongoose.startSession();
+  
+  try {
+    const invoiceData: InvoiceData = req.body;
+
+    // Start transaction
+    await session.startTransaction();
+
+    // Add new order
+    async function getNextOrderNumber() {
+      const counter = await Counter.findOneAndUpdate(
+        { name: "ordernumber" },
+        { $inc: { value: 1 } },
+        { new: true, upsert: true }
+      );
+      return counter.value;
+    }
+
+    const nextOrderNumber = await getNextOrderNumber();
+    const invoiceDate = new Date(invoiceData.invoicedate);
+    const invoiceDue = new Date(invoiceData.duedate);
+
+    const invoiceCustomer = await Customer.findOne({ name: invoiceData.client }).session(session);
+    if (!invoiceCustomer){
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const orderlines = invoiceData.orderlines.map((line: InvoiceOrderLine, index: number) => ({
+      orderlinenumber: index + 1,
+      productline: line.productline,
+      productcode: line.productcode ?? 1234,
+      quantityordered: line.quantityordered,
+      priceeach: line.priceeach,
+      sales: line.quantityordered * line.priceeach,
+      msrp: line.priceeach
+    }));
+
+    const newOrder = new Order({
+      ordernumber: nextOrderNumber,
+      orderdate: invoiceDate,
+      status: "IN PROCESS",
+      qtr_id: Math.ceil((invoiceDate.getMonth() + 1) / 3),
+      month_id: invoiceDate.getMonth() + 1,
+      year_id: invoiceDate.getFullYear(),
+      customerid: invoiceCustomer.customerid,
+      dealsize: "MEDIUM",
+      orderlines
+    });
+
+    await newOrder.save({ session });
+
+    // Finish adding order and retriving the order to use in invoice creation
+    const order = newOrder;
+    
+    let customer = await Customer.findOne({ customerid: order.customerid }).session(session);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // const issueremail = req.params.issueremail
+
+    if (customer.dangerlevel !== "HIGH"){
+      // Creating new invoice in db
+      const newInvoiceData: Partial<IInvoice> = {
+        ordernumber: order.ordernumber,
+        invoicenumber: invoiceData.invoicenumber,
+        invoicedate: invoiceDate,
+        // issueremail: issueremail,
+        duedate: invoiceDue
+      };
+
+      let subtotal = 0;
+      order.orderlines.forEach((line: any) => {
+        subtotal += line.priceeach * line.quantityordered;
+      });
+
+      newInvoiceData.subtotal = subtotal;
+      newInvoiceData.taxamount = (newInvoiceData.subtotal * (newInvoiceData.taxrate || 0)) / 100;
+      newInvoiceData.totalamount = newInvoiceData.subtotal + newInvoiceData.taxamount;
+      const riskScore = await calculateCustomerRisk(customer.customerid);
+      const riskLevel = getRiskLevel(riskScore);
+
+      // Update the danger level of the customer
+      await Customer.findOneAndUpdate(
+        { customerid: order.customerid },
+        { 
+          $set: { 
+            totalrevenue: (customer.totalrevenue || 0) + (newInvoiceData.totalamount || 0),
+            totaloutstanding: (customer.totaloutstanding || 0) + (newInvoiceData.totalamount || 0),
+            riskscore: riskScore,
+            dangerlevel: riskLevel
+          }, 
+          $inc: { totalinvoices: 1 }
+        },
+        { new: true, session }
+      );
+      
+      // Cheak whether the customer has stripe customer id or not (create one)
+      if (!customer.stripeCustomerId) {
+        stripeCustomer = await stripe.customers.create({
+          name: customer.name,
+          email: customer.email, 
+          phone: customer.phone, 
+          metadata: {
+            customerid: customer.customerid
+          }
+        });
+
+        customer = await Customer.findOneAndUpdate(
+          { customerid: order.customerid },
+          { 
+            $set: { 
+              stripeCustomerId: stripeCustomer.id,
+            }, 
+          },
+          { new: true, session }
+        );
+        
+        if (!customer) {
+          throw new Error("Failed to update customer with Stripe ID");
+        }
+      }
+
+      // Create new invoice in db
+      const newInvoice = new Invoice(newInvoiceData);
+      await newInvoice.save({ session });
+
+      // Create new invoice in stripe
+      stripeInvoice = await stripe.invoices.create({
+        customer: customer.stripeCustomerId,
+        collection_method: 'send_invoice',
+        days_until_due: 90,
+        currency: 'myr', 
+        description: newInvoice.notes || `Invoice for Order ${newInvoice.ordernumber}`,
+        custom_fields: [
+          {
+            name: "Order Line Number",
+            value: order.orderlines.length.toString()
+          }
+        ],
+        footer: "Any questions? Contact us at Whatsapp +60123456789",
+        metadata: {
+          invoicenumber: newInvoice.invoicenumber,
+          ordernumber: newInvoice.ordernumber.toString(),
+          customerid: customer.customerid
+        },
+        auto_advance: newInvoice.status !== 'DRAFT'
+      });
+
+      for (const orderLine of order.orderlines) {
+        const invoiceItem = await stripe.invoiceItems.create({
+          customer: customer.stripeCustomerId,
+          invoice: stripeInvoice.id,
+          currency: 'myr',
+          unit_amount_decimal: (orderLine.priceeach * 100).toFixed(0),
+          quantity: orderLine.quantityordered,
+          description: `${orderLine.productline} - ${orderLine.productcode}`,
+          metadata: {
+            productcode: orderLine.productcode,
+            productline: orderLine.productline,
+            orderlinenumber: orderLine.orderlinenumber.toString()
+          }
+        });
+        createdInvoiceItems.push(invoiceItem.id);
+      }
+
+      if (newInvoice.taxamount && newInvoice.taxamount > 0) {
+        const taxItem = await stripe.invoiceItems.create({
+          customer: customer.stripeCustomerId,
+          invoice: stripeInvoice.id,
+          amount: Math.round(newInvoice.taxamount * 100),
+          currency: 'myr',
+          description: `Tax (${newInvoice.taxrate}%)`,
+          metadata: {
+            type: 'tax',
+            rate: (newInvoice.taxrate ?? 0).toString()
+          }
+        });
+        createdInvoiceItems.push(taxItem.id);
+      }
+
+      // After get the stripe id, update in db
+      const updatedInvoice = await Invoice.findByIdAndUpdate(
+        newInvoice._id,
+        { $set: { stripeinvoiceid: stripeInvoice.id } },
+        { new: true, session }
+      );
+
+      if (!updatedInvoice) {
+        throw new Error("Failed to update invoice with Stripe ID");
+      }
+
+      await session.commitTransaction();
+
+      res.status(200).json({ 
+        message: "Invoice created successfully!",
+        invoice: updatedInvoice,
+        stripeInvoiceId: stripeInvoice.id
+      });
+    } else {
+      res.status(401).json({ message: "High Danger Level for the customer" });
+    }
+    
+  } catch (err) {
+    console.error('Invoice creation error:', err);
+    
+    // Rollback transaction
+    await session.abortTransaction();
+    
+    // Cleanup Stripe
+    if (stripeInvoice) {
+      try {
+        console.log("Cleaning up Stripe invoice due to error");
+        
+        for (const itemId of createdInvoiceItems) {
+          try {
+            await stripe.invoiceItems.del(itemId);
+          } catch (itemErr) {
+            console.error(`Failed to delete invoice item ${itemId}:`, itemErr);
+          }
+        }
+        
+        if (stripeInvoice.status === 'draft') {
+          await stripe.invoices.del(stripeInvoice.id);
+        } else {
+          await stripe.invoices.voidInvoice(stripeInvoice.id);
+        }
+      } catch (cleanupErr) {
+        console.error("CRITICAL: Failed to cleanup Stripe invoice:", cleanupErr);
+      }
+    }
+    
+    if (stripeCustomer) {
+      try {
+        console.log("Cleaning up Stripe customer due to error");
+        await stripe.customers.del(stripeCustomer.id);
+      } catch (customerCleanupErr) {
+        console.error("Failed to cleanup Stripe customer:", customerCleanupErr);
+      }
+    }
+    
+    res.status(500).json({ 
+      error: "Failed to create invoice",
+      details: err instanceof Error ? err.message : 'Unknown error'
+    });
+    
+  } finally {
+    await session.endSession();
   }
 });
 
