@@ -20,4 +20,8 @@ export interface Customer {
     totaloutstanding: number;
     averageday: number;
     updatedAt?: string;
+    totalclients: number;
+    averagepaymentdays: number;
+    highriskcounts: number;
+    allrevenue: number;
 }

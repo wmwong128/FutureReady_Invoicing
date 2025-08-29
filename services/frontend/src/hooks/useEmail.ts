@@ -1,44 +1,26 @@
-/* import { useMutation } from "@tanstack/react-query";
-import useMachine from "./useMachine";
+import { useMemo } from "react"
+import useMachine from "./useMachine"
 
-export interface EmailPayload {
-  to: string;
-  subject: string;
-  html: string;
+export interface MailData {
+  emailHtml: string;
+  clientName: string;
+  invoiceId: string;
+  reminderStage: "First Reminder" | "Second Reminder" | "Final Reminder" | "Due Inform";
+  sentDate: string;
+  sentTime: string;
+  notes: string;
 }
 
-export function useEmail() {
-  return useMutation({
-    mutationFn: async (payload: EmailPayload) => {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_MAIN_URL}/api/email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-      .then(res => res.json())
-      .then(data => console.log(data))
-      .catch(err => console.error(err));
+export default function useEmail() {
+  const query = useMachine({
+    url: `${import.meta.env.VITE_BACKEND_MAIN_URL}/followup`,
+    queryOptions: { queryKey: ["followup-emails"] }
+  })
 
-      if (!response.ok) {
-        throw new Error("Failed to send email");
-      }
+  const emailsData = useMemo(
+    () => (query.data as MailData[]) ?? [],
+    [query.data]
+  )
 
-      return response.json();
-    },
-  });
+  return { ...query, emailsData }
 }
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-fetch(`${backendUrl}/your-endpoint`, {
-  method: 'GET', // or 'POST', etc.
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-.then(res => res.json())
-.then(data => console.log(data))
-.catch(err => console.error(err));
- */

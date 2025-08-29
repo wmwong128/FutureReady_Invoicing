@@ -1,14 +1,14 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useNavigate } from "react-router-dom";
-import { formatDate } from "@/lib/utils";
 import { useInvoiceManagement, useInvoiceStripeView, useSendInvoice } from "@/hooks/useInvoice";
+import { formatDate } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { DollarSign, Download, Edit, Eye, Plus, Search, Send } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const InvoiceManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -17,6 +17,8 @@ export const InvoiceManagement = () => {
     const navigate = useNavigate();
 
     const { stats, invoices, draftInvoices } = useInvoiceManagement();
+    console.log("invoiceData:", stats);
+
     const { viewInvoicePDF } = useInvoiceStripeView();
     const { sendInvoice } = useSendInvoice(sendInvoiceId);
     const queryClient = useQueryClient();

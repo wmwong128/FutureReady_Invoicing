@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Dashboard } from "@/components/Dashboard";
 import { InvoiceManagement } from "@/components/InvoiceManagement";
 import { ClientManagement } from "@/components/ClientManagement";
-import { Email } from "@/components/Email";
+import { MailManagement } from "@/components/MailManagement";
 
 const Index = ({ overrideContent, forceTab }: {overrideContent?: React.ReactNode, forceTab?: string}) => {
   const [activeTab, setActiveTab] = useState(forceTab?? "dashboard");
@@ -18,7 +18,7 @@ const Index = ({ overrideContent, forceTab }: {overrideContent?: React.ReactNode
       case "clients":
         return <ClientManagement />;
       case "email":
-        return <Email />;
+        return <MailManagement />;
       default:
         return <Dashboard />;
     }

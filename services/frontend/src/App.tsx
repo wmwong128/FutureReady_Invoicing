@@ -9,7 +9,6 @@ import Profile from './components/Profile';
 import useMachine from './hooks/useMachine';
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
-//import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ViewInvoice from "./components/ViewInvoice.tsx";

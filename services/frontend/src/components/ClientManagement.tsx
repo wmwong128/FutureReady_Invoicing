@@ -1,33 +1,36 @@
-import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  MoreHorizontal, 
-  Search, 
-  Eye, 
-  Edit, 
-  Mail,
-  Phone,
+import { useAllCustomer } from "@/hooks/useAllCustomer";
+import {
+  AlertTriangle,
   Building,
-  TrendingUp,
-  AlertTriangle
+  Edit,
+  Eye,
+  Mail,
+  MoreHorizontal,
+  Phone,
+  Search,
+  TrendingUp
 } from "lucide-react";
-import { useCustomer } from "@/hooks/useCustomer";
+import { useMemo, useState } from "react";
 
 
 export const ClientManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { customersData = [], isLoading } = useCustomer();
+  const { customersData = [], isLoading } = useAllCustomer();
+
+  console.log("customersData:", customersData);
+
 
   const getRiskBadge = (risk?: string) => {
     if (risk === "High Risk")
@@ -59,7 +62,8 @@ export const ClientManagement = () => {
     );
   }, [customersData, searchTerm]);
 
-  // ✅ Stats
+
+  //  Stats
   const totalClients = customersData.length;
   const totalRevenue = customersData.reduce(
     (sum, c) => sum + (c.totalrevenue || 0),
@@ -141,12 +145,18 @@ export const ClientManagement = () => {
               </span>
             </div>
             <div className="text-2xl font-bold">
-              ${totalRevenue.toLocaleString()}
+              MYR {totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
       </div>
+
+
+
+
+
+
 
       {/* Clients Table */}
       <Card>
@@ -174,7 +184,7 @@ export const ClientManagement = () => {
                 <TableHead>Outstanding</TableHead>
                 <TableHead>Avg Days</TableHead>
                 <TableHead>Risk Level</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -183,7 +193,7 @@ export const ClientManagement = () => {
                   key={customersData._id}
                   className="hover:bg-muted/50"
                 >
-                  <TableCell>
+                  <TableCell className="text-left">
                     <div>
                       <p className="font-medium">{customersData.name}</p>
                       <p className="text-xs text-muted-foreground">
@@ -191,7 +201,7 @@ export const ClientManagement = () => {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1">
                         <Mail className="h-3 w-3 text-muted-foreground" />
@@ -203,17 +213,17 @@ export const ClientManagement = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <div>
                       <p className="font-medium">
-                        ${customersData.totalrevenue?.toLocaleString()}
+                        MYR {customersData.totalrevenue?.toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {customersData.totalinvoices} invoices
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <span
                       className={
                         customersData.totaloutstanding && customersData.totaloutstanding > 0
@@ -221,10 +231,10 @@ export const ClientManagement = () => {
                           : "text-muted-foreground"
                       }
                     >
-                      ${customersData.totaloutstanding?.toLocaleString()}
+                      MYR {customersData.totaloutstanding?.toLocaleString()}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <span
                       className={
                         customersData.averageday && customersData.averageday > 30
@@ -235,7 +245,7 @@ export const ClientManagement = () => {
                       {customersData.averageday} days
                     </span>
                   </TableCell>
-                  <TableCell>{getRiskBadge(customersData.dangerlevel)}</TableCell>
+                  <TableCell className="text-left">{getRiskBadge(customersData.dangerlevel)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8">

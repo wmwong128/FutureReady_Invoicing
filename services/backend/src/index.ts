@@ -1,6 +1,6 @@
 import express = require('express');
 import metadata = require('./metadata');
-import type { IInvoice, ICustomer, IOrder } from "./models/dbScheme";
+import type { ICustomer, IInvoice } from "./models/dbScheme";
 import mailing = require('./mailing');
 import Counter = require('./models/countSchema');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
@@ -1175,41 +1175,91 @@ app.patch('/client/:id', async (req, res) => {
   }
 });
 
+// app.get('/followup', async (req, res) => {
+//   try {
+//     const allInvoicesRaw = await Invoice.find({
+//       issueremail: req.user?.email,
+//       status: "PENDING",
+//       followupnumber: { $ne: 0 }
+//     })
+//     .sort({ invoicedate: -1 });;
+//     const allInvoices: any[] = [];
+
+//     for (const invoice of allInvoicesRaw) {
+//       const order = await Order.findOne({ ordernumber: invoice.ordernumber });
+//       if (!order) {
+//         return res.status(404).json({ error: "Order not found" });
+//       }
+
+//       const customer = await Customer.findOne({ customerid: order.customerid });
+//       if (!customer) {
+//         return res.status(404).json({ error: "Customer not found" });
+//       }
+
+//       const invObj = invoice.toObject() as any;
+//       invObj.client = customer.name; 
+//       invObj.riskscore = customer.riskscore;
+//       invObj.risk = customer.dangerlevel;
+//       allInvoices.push(invObj);
+//     }
+
+//     res.json(allInvoices);
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Something went wrong", details: err });
+//   }
+// });
+
 app.get('/followup', async (req, res) => {
   try {
     const allInvoicesRaw = await Invoice.find({
       issueremail: req.user?.email,
       status: "PENDING",
       followupnumber: { $ne: 0 }
-    })
-    .sort({ invoicedate: -1 });;
+    }).sort({ invoicedate: -1 });
+
     const allInvoices: any[] = [];
 
     for (const invoice of allInvoicesRaw) {
       const order = await Order.findOne({ ordernumber: invoice.ordernumber });
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
+      if (!order) continue;
 
       const customer = await Customer.findOne({ customerid: order.customerid });
-      if (!customer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
+      if (!customer) continue;
 
       const invObj = invoice.toObject() as any;
-      invObj.client = customer.name; 
-      invObj.riskscore = customer.riskscore;
-      invObj.risk = customer.dangerlevel;
-      allInvoices.push(invObj);
+
+      // Map DB fields into frontend-friendly names
+      allInvoices.push({
+        emailHtml: invObj.emailhtml,
+        clientName: customer.name,
+        invoiceId: invObj.invoicenumber,
+        reminderStage: mapReminderStage(invObj.followupnumber),
+        sentDate: new Date(invObj.followupdate).toLocaleDateString(),
+        sentTime: new Date(invObj.followupdate).toLocaleTimeString(),
+        notes: invObj.notes ?? ""
+      });
     }
 
     res.json(allInvoices);
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong", details: err });
   }
 });
+
+// Helper to translate followupnumber to stage
+function mapReminderStage(followupnumber: number) {
+  switch (followupnumber) {
+    case 72: return "First Reminder";   // 60 days
+    case 30: return "Second Reminder";  // 30 days
+    case 3:  return "Final Reminder";   // 3 days
+    case 0:  return "Due Inform";       // Overdue
+    default: return "Due Inform";
+  }
+}
+
 
 app.get(/(.*)/, (_req, res) => {
     res.status(404).send("Page not found. Please check your URL.");
