@@ -112,3 +112,13 @@ export function useSendInvoice(id?: string) {
 
     return { sendInvoice };
 }
+
+export function useDeleteInvoice(id?: string) {
+    const { user } = useAuth0();
+    const deleteInvoice = useMachineMutation({
+        url: `${BASE_URL}/${user?.email}/${id}`,
+        method: "DELETE",
+    })
+
+    return { deleteInvoice };
+}
