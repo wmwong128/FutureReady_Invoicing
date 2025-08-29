@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
 import { Separator } from "@radix-ui/react-separator";
@@ -8,22 +8,23 @@ import { Label } from "./ui/label";
 import { useEffect, useState } from "react";
 import { ClientCombobox } from "./ClientCombobox";
 import { InvoiceLineItem, type LineItem } from "./InvoiceLineItem";
-
-export interface Client {  //TODO: Client Interface
-    id: string;
-    name: string;
-    email: string;
-}
+import type { NewInvoiceRequest, OrderLine } from "@/data/types/Invoice";
+import { useInvoice } from "@/hooks/useInvoice";
+import type { Customer } from "@/data/types/Customer";
 
 export const InvoiceForm = () => {
+    const { id } = useParams<{ id: string }>();
+    const { invoiceDetails } = useInvoice(id);
     const navigate = useNavigate();
-    const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+    const [isEdit, setIsEdit] = useState<boolean>(false);
+    const [selectedClient, setSelectedClient] = useState<Customer | null>(null);
     const [invoiceNumber, setInvoiceNumber] = useState("");
     const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState("");
     const [lineItems, setLineItems] = useState<LineItem[]>([
         { id: "1", name: "", quantity: 1, unitPrice: 0 }
     ]);
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     // Calculate due date (90 days after invoice date)
     useEffect(() => {
@@ -35,9 +36,30 @@ export const InvoiceForm = () => {
         }
     }, [invoiceDate]);
 
+    useEffect(() => {
+        if(id && invoiceDetails) {
+            setIsEdit(true);
+            if (invoiceDetails.invoice.status !== "DRAFT") {
+                navigate("/");
+            } else {
+                setSelectedClient(invoiceDetails.customer);
+                setInvoiceNumber(invoiceDetails.invoice.invoicenumber);
+                setInvoiceDate(invoiceDetails.invoice.invoicedate.split('T')[0]);
+                const tempLineItems: LineItem[] = invoiceDetails.order.orderlines?.map((line: OrderLine, index: number) => ({
+                        id: line.orderlinenumber?.toString() ?? (index + 1).toString(),
+                        name: line.productline ?? "",
+                        quantity: line.quantityordered ?? 0,
+                        unitPrice: line.priceeach ?? 0,
+                    })) ?? lineItems;
+                setLineItems(tempLineItems)
+            }
+            
+        }
+    }, [id, invoiceDetails, navigate]);
+
     const addLineItem = () => {
         const newItem: LineItem = {
-            id: Date.now().toString(),
+            id: (lineItems.length + 1).toString(),
             name: "",
             quantity: 1,
             unitPrice: 0
@@ -47,7 +69,13 @@ export const InvoiceForm = () => {
 
     const removeLineItem = (id: string) => {
         if (lineItems.length > 1) {
-            setLineItems(lineItems.filter(item => item.id !== id));
+            setLineItems(
+                lineItems.filter(item => item.id !== id)
+                    .map((item, index) => ({
+                        ...item,
+                        id: (index + 1).toString(),
+                    }))
+            );
         }
     };
 
@@ -67,13 +95,43 @@ export const InvoiceForm = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Invoice data:", {
-            client: selectedClient,
-            invoiceNumber,
-            invoiceDate,
-            lineItems,
-            total: calculateInvoiceTotal()
-        });
+        if (!selectedClient) {
+            alert("Please select a client");
+            return;
+        }
+        setIsLoading(true)
+        if (!isEdit) {
+            const payload: NewInvoiceRequest = {
+                client: selectedClient.name ?? "",
+                invoicenumber: invoiceNumber,
+                invoicedate: invoiceDate,
+                duedate: dueDate,
+                orderlines: lineItems.map((item) => ({
+                    productline: item.name,
+                    quantityordered: item.quantity,
+                    priceeach: item.unitPrice,
+                }))
+            }
+            console.log(payload)
+        } else {
+            const payload = {
+                invoicenumber: invoiceNumber,
+                ordernumber: invoiceDetails.order.ordernumber,
+                taxrate: invoiceDetails.invoice.taxrate,
+                dealsize: invoiceDetails.order.dealsize,
+                order: {
+                    qtr_id: invoiceDetails.order.qtr_id,
+                    month_id: invoiceDetails.order.month_id,
+                    orderlines: lineItems.map((item, index) => ({
+                        orderlinenumber: index + 1,
+                        productline: item.name,
+                        quantityordered: item.quantity,
+                        priceeach: item.unitPrice,
+                    }))
+                }
+            }
+            console.log(payload)
+        }
     };
 
     return (
@@ -93,7 +151,7 @@ export const InvoiceForm = () => {
                 </div>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                        New Invoice
+                        { isEdit? "Edit Invoice" : "New Invoice"}
                     </h1>
                 </div>
             </div>
@@ -109,6 +167,7 @@ export const InvoiceForm = () => {
                                     <ClientCombobox
                                         selectedClient={selectedClient}
                                         onClientSelect={setSelectedClient}
+                                        disabled={isEdit || isLoading}
                                     />
                                 </div>
                             </div>
@@ -122,6 +181,7 @@ export const InvoiceForm = () => {
                                         onChange={(e) => setInvoiceNumber(e.target.value)}
                                         placeholder="INV-001"
                                         required
+                                        disabled={isLoading}
                                     />
                                 </div>
                                 <div>
@@ -132,6 +192,7 @@ export const InvoiceForm = () => {
                                         value={invoiceDate}
                                         onChange={(e) => setInvoiceDate(e.target.value)}
                                         required
+                                        disabled={isLoading}
                                     />
                                 </div>
                                 <div>
@@ -158,6 +219,7 @@ export const InvoiceForm = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={addLineItem}
+                                    disabled={isLoading}
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Add Item
@@ -173,6 +235,7 @@ export const InvoiceForm = () => {
                                         onRemove={removeLineItem}
                                         canRemove={lineItems.length > 1}
                                         lineTotal={calculateLineTotal(item)}
+                                        disabled={isLoading}
                                     />
                                 ))}
                             </div>
@@ -194,8 +257,8 @@ export const InvoiceForm = () => {
 
                         {/* Actions */}
                         <div className="flex justify-end space-x-4">
-                            <Button type="submit">
-                                Create Invoice
+                            <Button type="submit" disabled={isLoading}>
+                                {isEdit? "Save Changes" : "Create Invoice"}
                             </Button>
                         </div>
                     </form>

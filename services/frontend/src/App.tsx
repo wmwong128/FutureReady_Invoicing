@@ -34,6 +34,7 @@ function App() {
         <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/new-invoice" element={<Index overrideContent={<InvoiceForm/>} forceTab="invoices"/>} />
+            <Route path="/invoice/:id/edit" element={<Index overrideContent={<InvoiceForm/>} forceTab="invoices"/>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} /> 
         </Routes>
