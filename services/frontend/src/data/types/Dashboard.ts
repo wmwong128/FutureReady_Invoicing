@@ -1,17 +1,20 @@
 export interface DashboardResponse {
-    mrr: {
-        monthlyrevenue: number;
-        percentagerevenue: number;
-    }
-    arAging: number;
-    dso: number;
-    debt: 0;
-    invoiceStatusList: {
-        totaloverdue: number;
-        totalunpaid: number;
-        totalpaid: number;
-    },
-    revenueTrend: RevenueTrend[];
+    dashboard: {
+        mrr: {
+            monthlyrevenue: number;
+            percentagerevenue: number;
+        }
+        arAging: number;
+        dso: number;
+        debt: 0;
+        invoiceStatusList: {
+            totaloverdue: number;
+            totalunpaid: number;
+            totalpaid: number;
+        },
+        revenueTrend: RevenueTrend[];
+    };
+    forecast: unknown;     // Temporary
 }
 
 interface RevenueTrend {

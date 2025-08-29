@@ -11,7 +11,7 @@ const BASE_URL = `${import.meta.env.VITE_BACKEND_MAIN_URL}/invoice`;
 export function useInvoiceManagement() {
     const { user } = useAuth0()
     const query = useMachine({
-        url: `${BASE_URL}?issueremail=${user?.email}`,
+        url: `${BASE_URL}/${user?.email}`,
         queryOptions: {
             queryKey: ["invoiceManagement", user?.email],
         }
@@ -45,6 +45,7 @@ export function useInvoice(id?: string) {
 }
 
 export function useInvoiceStripeView(m2mAuthOptions?: UseM2MAuthOptions) {
+    const { user } = useAuth0()
     const authResult = useM2MAuth(m2mAuthOptions);
       const authResultData =
         typeof authResult.data === 'object' ? (authResult.data as object) : null;
@@ -60,7 +61,7 @@ export function useInvoiceStripeView(m2mAuthOptions?: UseM2MAuthOptions) {
     const viewInvoicePDF = useCallback(async (id: string) => {
         try {
             const response = await fetch(
-                `${BASE_URL}/${id}/stripepreview`,
+                `${BASE_URL}/${user?.email}/${id}/stripepreview`,
                 {
                     method: "GET",
                     headers: {
@@ -83,8 +84,9 @@ export function useInvoiceStripeView(m2mAuthOptions?: UseM2MAuthOptions) {
 }
 
 export function useCreateInvoice() {
+    const { user } = useAuth0()
     const createInvoice = useMachineMutation({
-        url: BASE_URL,
+        url: `${BASE_URL}/${user?.email}`,
         method: "POST",
     });
 
@@ -92,8 +94,9 @@ export function useCreateInvoice() {
 }
 
 export function useUpdateInvoice(id?: string) {
+    const { user } = useAuth0()
     const updateInvoice = useMachineMutation({
-        url: `${BASE_URL}/${id}`,
+        url: `${BASE_URL}/${user?.email}/${id}`,
         method: "PATCH",
     });
 
@@ -101,8 +104,9 @@ export function useUpdateInvoice(id?: string) {
 }
 
 export function useSendInvoice(id?: string) {
+    const { user } = useAuth0()
     const sendInvoice = useMachineMutation({
-        url: `${BASE_URL}/${id}/send`,
+        url: `${BASE_URL}/${user?.email}/${id}/send`,
         method: "POST",
     });
 

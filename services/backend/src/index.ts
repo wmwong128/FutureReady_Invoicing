@@ -206,7 +206,7 @@ app.listen(containerPort, () => {
 app.get('/invoice/:issueremail', async (req, res) => {
   try {
     const issueremail = req.params.issueremail
-    const allInvoicesRaw = await Invoice.find({ issuerEmail: issueremail });
+    const allInvoicesRaw = await Invoice.find({ issueremail: issueremail });
 
     const allInvoices: any[] = [];
 

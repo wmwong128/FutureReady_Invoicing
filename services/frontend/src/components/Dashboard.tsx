@@ -37,17 +37,17 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}
+                            ${dashboardData?.dashboard?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}
                         </div>
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                             <div className={cn(
                                 "flex items-center space-x-1", 
-                                (dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? "text-success" : "text-destructive"
+                                (dashboardData?.dashboard?.mrr?.percentagerevenue ?? 0) >= 0 ? "text-success" : "text-destructive"
                             )}>
-                                {(dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? 
+                                {(dashboardData?.dashboard?.mrr?.percentagerevenue ?? 0) >= 0 ? 
                                     (<TrendingUp className="h-3 w-3" />) : (<TrendingDown className="h-3 w-3" />)
                                 }
-                                <span>{Math.abs(dashboardData?.mrr?.percentagerevenue)}%</span>
+                                <span>{Math.abs(dashboardData?.dashboard?.mrr?.percentagerevenue)}%</span>
                             </div>
                             <span>vs lasth month</span>
                         </div>
@@ -62,7 +62,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.arAging?.toLocaleString() ?? 0}
+                            ${dashboardData?.dashboard?.arAging?.toLocaleString() ?? 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -75,7 +75,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            {dashboardData?.dso}
+                            {dashboardData?.dashboard?.dso}
                         </div>
                     </CardContent>
                 </Card>
@@ -88,7 +88,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.debt?.toLocaleString() ?? 0}
+                            ${dashboardData?.dashboard?.debt?.toLocaleString() ?? 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -119,19 +119,19 @@ export const Dashboard = () => {
                         <div className="flex items-start space-x-2">
                             <Badge variant="outline" className="bg-success/10 text-success border-success/20">Paid</Badge>
                             <div className="flex flex-col">
-                                {dashboardData?.invoiceStatusList?.totalpaid} invoice(s)
+                                {dashboardData?.dashboard?.invoiceStatusList?.totalpaid} invoice(s)
                             </div>
                         </div>
                         <div className="flex items-start space-x-2">
                             <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Unpaid</Badge>
                             <div className="flex flex-col">
-                                {dashboardData?.invoiceStatusList?.totalunpaid} invoice(s)
+                                {dashboardData?.dashboard?.invoiceStatusList?.totalunpaid} invoice(s)
                             </div>
                         </div>
                         <div className="flex items-start space-x-2">
                             <Badge variant="destructive">Overdue</Badge>
                             <div className="flex flex-col">
-                                {dashboardData?.invoiceStatusList?.totaloverdue} invoice(s)
+                                {dashboardData?.dashboard?.invoiceStatusList?.totaloverdue} invoice(s)
                             </div>
                         </div>
                     </CardContent>
