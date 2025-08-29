@@ -7,7 +7,6 @@ const stripe = new StripeLib(process.env.STRIPE_SECRET_KEY) as Stripe;
 const router = express.Router();
 
 router.post("/create-intent", async (req, res) => {
-    console.log("TEST2")
   try {
     const { invoiceId, amount } = req.body;
 
