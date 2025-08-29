@@ -158,12 +158,12 @@ app.get('/', async (req, res) => {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/predict", { // Waiting Eric
+      const response = await axios.get("http://localhost:9090/forecast", { 
         timeout: 3000,
       });
       predictionData = response.data;
     } catch (err) {
-      console.warn("Python service not reachable:", err);
+      // console.warn("Python service not reachable:", err);
     }
 
     const monthlyRevenueBoard = {monthlyrevenue, percentagerevenue};
@@ -1457,7 +1457,7 @@ app.post('/order', async (req, res) => {
         stripeInvoiceId: stripeInvoice.id
       });
     } else {
-      res.status(401).json({ message: "High Danger Level for the customer" });
+      res.status(403).json({ message: "High Danger Level for the customer" });
     }
     
   } catch (err) {
@@ -1517,29 +1517,52 @@ app.get('/followup/:issueremail', async (req, res) => {
     })
     .sort({ followupdate: -1 });;
     const allInvoices: any[] = [];
+    let totalEmail = 0;
+    let firstReminder = 0;
+    let finalReminder = 0;
+    let dueInform = 0;
 
     for (const invoice of allInvoicesRaw) {
       const order = await Order.findOne({ ordernumber: invoice.ordernumber });
       if (!order) continue;
 
       const customer = await Customer.findOne({ customerid: order.customerid });
-      if (!customer) continue;
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      if (invoice.followupstage === 1) {
+        firstReminder ++;
+      }
+      if (invoice.followupstage === 3) {
+        finalReminder ++;
+      }
+      if (invoice.followupstage === 4) {
+        dueInform ++
+      }
+      totalEmail ++;
 
       const invObj = invoice.toObject() as any;
-
-      // Map DB fields into frontend-friendly names
-      allInvoices.push({
-        emailHtml: invObj.emailhtml,
-        clientName: customer.name,
-        invoiceId: invObj.invoicenumber,
-        reminderStage: mapReminderStage(invObj.followupnumber),
-        sentDate: new Date(invObj.followupdate).toLocaleDateString(),
-        sentTime: new Date(invObj.followupdate).toLocaleTimeString(),
-        notes: invObj.notes ?? ""
-      });
+      invObj.client = customer.name; 
+      invObj.sentDate = new Date(invObj.followupdate).toLocaleDateString();
+      invObj.sentTime = new Date(invObj.followupdate).toLocaleTimeString();
+      invObj.riskscore = customer.riskscore;
+      invObj.risk = customer.dangerlevel;
+      allInvoices.push(invObj);
     }
 
-    res.json(allInvoices);
+    const followUp = [
+      { 
+        totalEmail: totalEmail,
+        firstReminder: firstReminder,
+        finalReminder: finalReminder,
+        dueInform: dueInform,
+        invoice: allInvoices,
+      }
+    ]
+
+    res.json(followUp);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong", details: err });
