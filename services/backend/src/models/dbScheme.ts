@@ -121,11 +121,11 @@ const customersSchema = new Schema<ICustomer>(
       type: String,
       required: false,
       unique: true,
+      sparse: true,
       index: {
         unique: true,
-        partialFilterExpression: { stripeCustomerId: { $type: "string" } } // only enforce uniqueness when it's a string
-      },
-      sparse: true
+        partialFilterExpression: { stripeCustomerId: { $exists: true, $ne: null } }
+      }
     },
     name: {
       type: String,
