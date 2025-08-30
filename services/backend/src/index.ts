@@ -105,19 +105,7 @@ app.get('/', async (req, res) => {
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
     // const issueremail = req.params.issueremail
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const invoices = await Invoice.find({});
-=======
     const invoices = await Invoice.find();
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-    const invoices = await Invoice.find();
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-    const invoices = await Invoice.find();
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -1187,18 +1175,7 @@ app.post('/client', async (req, res) => {
     newClientData.totalrevenue ??= 0;
     newClientData.totalinvoices ??= 0;
     newClientData.totaloutstanding ??= 0;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     newClientData.excluded ??= false;
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-    newClientData.excluded ??= false;
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-    newClientData.excluded ??= false;
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
     newClientData.averageday = 0;
     newClientData.stripeCustomerId = null;
 
