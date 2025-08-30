@@ -30,8 +30,9 @@ export function useInvoiceManagement() {
 }
 
 export function useInvoice(id?: string) {
+    const { user } = useAuth0()
     const query = useMachine({
-        url: id ? `${BASE_URL}/${id}` : "",
+        url: id ? `${BASE_URL}/${user?.email}/${id}` : "",
         queryOptions: {
             queryKey: ["invoice", id],
             enabled: !!id,
