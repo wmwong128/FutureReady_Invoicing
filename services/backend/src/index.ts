@@ -105,7 +105,11 @@ app.get('/', async (req, res) => {
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
     // const issueremail = req.params.issueremail
+<<<<<<< HEAD
     const invoices = await Invoice.find({});
+=======
+    const invoices = await Invoice.find();
+>>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -159,7 +163,7 @@ app.get('/', async (req, res) => {
 
     try {
       const response = await axios.get("http://localhost:9090/forecast", { 
-        timeout: 3000,
+        timeout: 5000,
       });
       predictionData = response.data;
     } catch (err) {
@@ -206,7 +210,7 @@ app.listen(containerPort, () => {
 app.get('/invoice/:issueremail', async (req, res) => {
   try {
     const issueremail = req.params.issueremail
-    const allInvoicesRaw = await Invoice.find({ issuerEmail: issueremail });
+    const allInvoicesRaw = await Invoice.find({ issueremail: issueremail });
 
     const allInvoices: any[] = [];
 
@@ -341,7 +345,16 @@ app.post('/invoice/:issueremail', async (req, res) => {
 
     const invoiceCustomer = await Customer.findOne({ name: invoiceData.client }).session(session);
     if (!invoiceCustomer){
-      return res.status(404).json({ error: "Customer not found" });
+      return res.status(404).json({ 
+        created: 0,
+        error: "Customer not found" 
+      });
+    }
+    if (invoiceCustomer.dangerlevel === "HIGH" && invoiceCustomer.excluded === false) {
+      return res.status(403).json({ 
+        created: 0,
+        error: "Customer is high-risk and not on the exclusive list. New invoice was not created." 
+      });
     }
 
     const orderlines = invoiceData.orderlines.map((line: InvoiceOrderLine, index: number) => ({
@@ -373,7 +386,10 @@ app.post('/invoice/:issueremail', async (req, res) => {
     
     let customer = await Customer.findOne({ customerid: order.customerid }).session(session);
     if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
+      return res.status(404).json({ 
+        created: 0,
+        error: "Customer not found" 
+      });
     }
 
     const issueremail = req.params.issueremail
@@ -511,6 +527,7 @@ app.post('/invoice/:issueremail', async (req, res) => {
     await session.commitTransaction();
 
     res.status(200).json({ 
+      created: 1,
       message: "Invoice created successfully!",
       invoice: updatedInvoice,
       stripeInvoiceId: stripeInvoice.id
@@ -555,6 +572,7 @@ app.post('/invoice/:issueremail', async (req, res) => {
     }
     
     res.status(500).json({ 
+      created: 0,
       error: "Failed to create invoice",
       details: err instanceof Error ? err.message : 'Unknown error'
     });
@@ -1161,6 +1179,10 @@ app.post('/client', async (req, res) => {
     newClientData.totalrevenue ??= 0;
     newClientData.totalinvoices ??= 0;
     newClientData.totaloutstanding ??= 0;
+<<<<<<< HEAD
+=======
+    newClientData.excluded ??= false;
+>>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
     newClientData.averageday = 0;
     newClientData.stripeCustomerId = null;
 

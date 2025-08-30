@@ -1,25 +1,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MetricCard } from '@/components/MetricCard';
 import { RevenueChart } from '@/components/charts/RevenueChart'
 import {
     DollarSign,
     Calendar,
     Clock,
     HandCoins,
+    TrendingUp,
+    TrendingDown,
 } from 'lucide-react';
 import { Badge } from "./ui/badge";
 import { useDashboard } from "@/hooks/useDashboard";
+import { cn } from "@/lib/utils";
+import { AIChat } from "./AIChat";
 
 export const Dashboard = () => {
-    const { dashboardData } = useDashboard()
-
-    // Mock data for the dashboard
-    const metrics = {
-        mrr: { value: 45680, change: 12.5, period: 'vs last month' },
-        arAging: { value: 23450, change: -5.2, period: 'total outstanding' },
-        dso: { value: 28, change: -3, period: 'days' },
-        debt: { value: 14000, change: -2.1, period: 'total debt' },
-    };
+    const { dashboardData, revenueForecast, lastMonthWithActual } = useDashboard()
 
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
@@ -29,43 +24,75 @@ export const Dashboard = () => {
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
                         Dashboard
                     </h1>
-                <p className="text-muted-foreground">Monitor your business financial health</p>
+                    <p className="text-muted-foreground">Monitor your business financial health</p>
                 </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <MetricCard
-                    title="Monthly Revenue"
-                    value={`$${dashboardData?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}`}
-                    change={dashboardData?.mrr?.percentagerevenue}
-                    period="vs last month"
-                    icon={DollarSign}
-                    trend="up"
-                />
-                <MetricCard
-                    title="AR Outstanding"
-                    value={`$${dashboardData?.arAging?.toLocaleString() ?? 0}`}
-                    change={metrics.arAging.change}
-                    period={metrics.arAging.period}
-                    icon={Clock}
-                    trend="down"
-                />
-                <MetricCard
-                    title="Days Sales Outstanding"
-                    value={`${dashboardData?.dso}`}
-                    change={metrics.dso.change}
-                    period={metrics.dso.period}
-                    icon={Calendar}
-                    trend="down"
-                />
-                <MetricCard
-                    title="Debt"
-                    value={`$${dashboardData?.debt?.toLocaleString() ?? 0}`}
-                    change={metrics.debt.change}
-                    period={metrics.debt.period}
-                    icon={HandCoins}
-                    trend="down"
-                />
+                <Card className="hover:shadow-md transition-all duration-200 gap-2 justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground text-left">
+                            Monthly Revenue
+                        </CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-start">
+                        <div className="text-2xl font-bold text-foreground items">
+                            ${dashboardData?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}
+                        </div>
+                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                            <div className={cn(
+                                "flex items-center space-x-1", 
+                                (dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? "text-success" : "text-destructive"
+                            )}>
+                                {(dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? 
+                                    (<TrendingUp className="h-3 w-3" />) : (<TrendingDown className="h-3 w-3" />)
+                                }
+                                <span>{Math.abs(dashboardData?.mrr?.percentagerevenue)}%</span>
+                            </div>
+                            <span>vs lasth month</span>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-all duration-200 gap-2 justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground text-left">
+                            AR Outstanding
+                        </CardTitle>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-start">
+                        <div className="text-2xl font-bold text-foreground items">
+                            ${dashboardData?.arAging?.toLocaleString() ?? 0}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-all duration-200 gap-2 justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground text-left">
+                            Days Sales Outstanding
+                        </CardTitle>
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-start">
+                        <div className="text-2xl font-bold text-foreground items">
+                            {dashboardData?.dso}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-all duration-200 gap-2 justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground text-left">
+                            Debt
+                        </CardTitle>
+                        <HandCoins className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-start">
+                        <div className="text-2xl font-bold text-foreground items">
+                            ${dashboardData?.debt?.toLocaleString() ?? 0}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Charts Section */}
@@ -74,11 +101,11 @@ export const Dashboard = () => {
                     <CardHeader className="flex flex-col justify-start space-y-0 pb-2 text-left">
                         <CardTitle className="text-2xl">Revenue Trend & Forecast</CardTitle>
                         <CardDescription>
-                            Monthly revenue with 90-day forecast and confidence intervals
+                            Monthly revenue with 50-day forecast
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <RevenueChart />
+                        <RevenueChart chartData={revenueForecast ?? []} lastMonthWithActual={lastMonthWithActual ?? ""}/>
                     </CardContent>
                 </Card>
 
@@ -111,7 +138,7 @@ export const Dashboard = () => {
                     </CardContent>
                 </Card>
             </div>
-
+            <AIChat></AIChat>
         </div>
     );
 };

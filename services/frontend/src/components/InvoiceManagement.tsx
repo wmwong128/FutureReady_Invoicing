@@ -1,10 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+=======
+import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
+>>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+<<<<<<< HEAD
 import { useInvoiceManagement, useInvoiceStripeView, useSendInvoice } from "@/hooks/useInvoice";
 import { formatDate } from "@/lib/utils";
+=======
+import { useNavigate } from "react-router-dom";
+import { formatDate } from "@/lib/utils";
+import { useDeleteInvoice, useInvoiceManagement, useInvoiceStripeView, useSendInvoice } from "@/hooks/useInvoice";
+>>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 import { useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Download, Edit, Eye, Plus, Search, Send } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +24,7 @@ export const InvoiceManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchTermDraft, setSearchTermDraft] = useState("");
     const [sendInvoiceId, setSendInvoiceId] = useState<string>("");
+    const [deleteInvoiceId, setDeleteInvoiceId] = useState<string>("");
     const navigate = useNavigate();
 
     const { stats, invoices, draftInvoices } = useInvoiceManagement();
@@ -21,6 +32,7 @@ export const InvoiceManagement = () => {
 
     const { viewInvoicePDF } = useInvoiceStripeView();
     const { sendInvoice } = useSendInvoice(sendInvoiceId);
+    const { deleteInvoice } = useDeleteInvoice(deleteInvoiceId);
     const queryClient = useQueryClient();
 
     const getStatusBadge = (status: string) => {
@@ -62,10 +74,24 @@ export const InvoiceManagement = () => {
             {
                 onSuccess: () => {
                     alert(`Invoice sent`);
+                    setSendInvoiceId("");
                     queryClient.invalidateQueries(["invoiceManagement"]);
                 }
             }
         );
+    }
+
+    function handleInvoiceDelete(id: string) {
+        setDeleteInvoiceId(id);
+        deleteInvoice.mutate({},
+            {
+                onSuccess: () => {
+                    alert(`Invoice deleted`);
+                    setDeleteInvoiceId("");
+                    queryClient.invalidateQueries(["invoiceManagement"]);
+                }
+            }
+        )
     }
 
     return (
@@ -78,10 +104,10 @@ export const InvoiceManagement = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                    <Button variant="outline">
+                    {/* <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" />
                         Export
-                    </Button>
+                    </Button> */}
                     <Button variant="default" onClick={() => navigate("/new-invoice")}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Invoice
@@ -231,7 +257,9 @@ export const InvoiceManagement = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredDraftInvoices.map((invoice) => (
+                            {filteredDraftInvoices.map((invoice) => {
+                                const isDisable = deleteInvoiceId === invoice._id
+                            return (
                                 <TableRow key={invoice._id} className="hover:bg-muted/50">
                                     <TableCell className="font-medium text-left">{invoice.invoicenumber}</TableCell>
                                     <TableCell className="text-left">
@@ -248,19 +276,22 @@ export const InvoiceManagement = () => {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end space-x-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/view`)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => navigate(`/invoice/${invoice._id}/view`)}>
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/invoice/${invoice._id}/edit`)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => navigate(`/invoice/${invoice._id}/edit`)}>
                                                 <Edit className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleInvoiceSend(invoice._id)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceDelete(invoice._id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceSend(invoice._id)}>
                                                 <Send className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 </CardContent>

@@ -120,14 +120,19 @@ export const InvoiceForm = () => {
             createInvoice.mutate(
                 payload,
                 {
-                    onSuccess: () => {
-                        setIsLoading(false);
-                        alert(`Invoice created`);
+                    onSuccess: (res) => {
+                        alert(res.message);
                         navigate("/");
+                    },
+                    onError: (err) => {
+                        alert(err);
+                    },
+                    onSettled: () => {
+                        setIsLoading(false);
                     }
                 }
             );
-        } else {
+        } else if (user?.email) {
             const payload = {
                 invoicenumber: invoiceNumber,
                 ordernumber: invoiceDetails.order.ordernumber,
@@ -142,16 +147,21 @@ export const InvoiceForm = () => {
                         quantityordered: item.quantity,
                         priceeach: item.unitPrice,
                     }))
-                }
+                },
+                issueremail: user.email,
             }
-            console.log(payload)
             updateInvoice.mutate(
                 payload,
                 {
                     onSuccess: () => {
-                        setIsLoading(false);
                         alert("Invoice updated");
                         navigate("/");
+                    },
+                    onError: (err) => {
+                        alert(err);
+                    },
+                    onSettled: () => {
+                        setIsLoading(false);
                     }
                 }
             )

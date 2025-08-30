@@ -1,4 +1,12 @@
-export interface DashboardResponse {
+export interface DashboardResponse extends DashboardData {
+    dashboard: DashboardData;
+    forecast: {
+        dates?: string[];
+        forecast?: number[];
+    }
+}
+
+export interface DashboardData {
     mrr: {
         monthlyrevenue: number;
         percentagerevenue: number;
@@ -11,10 +19,11 @@ export interface DashboardResponse {
         totalunpaid: number;
         totalpaid: number;
     },
-    revenueTrend: RevenueTrend[];
-}
+    revenuetrend: RevenueTrend[];
+};
 
-interface RevenueTrend {
+export interface RevenueTrend {
     month: string;
-    actual: number;
+    actual?: number;
+    forecast?: number;
 }
