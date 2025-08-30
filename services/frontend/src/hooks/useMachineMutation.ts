@@ -39,11 +39,13 @@ export default function useMachineMutation<TData = unknown, TVariables = unknown
                 body: JSON.stringify(variables),
             });
 
+            const data = await response.json().catch(() => null);
+
             if (!response.ok) {
-                throw new Error(`Request failed: ${response.status}`);
+                throw new Error(data.error || data.message);
             }
 
-            return (await response.json()) as TData;
+            return data as TData;
         },
         ...mutationOptions,
     });
