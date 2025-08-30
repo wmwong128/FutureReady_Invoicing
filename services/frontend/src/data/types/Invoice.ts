@@ -66,4 +66,5 @@ export interface NewInvoiceRequest {
     invoicedate: string;
     duedate: string;
     orderlines: OrderLine[];
+    issueremail: string;
 }

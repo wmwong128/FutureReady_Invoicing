@@ -9,10 +9,13 @@ import {
   Menu,
   X,
   DollarSign,
-  Mail
+  Mail,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,6 +27,7 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth0();
 
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -34,6 +38,7 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
   ];
 
   return (
+    isAuthenticated && (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -100,14 +105,17 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-border">
+          <div className="flex flex-col space-y-2 p-4 border-t border-border">
             <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-primary-foreground">JD</span>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                <Avatar>
+                  <AvatarImage src={user!.picture ?? ""} alt={user!.name ?? "temp"}></AvatarImage>
+                  <AvatarFallback>404</AvatarFallback>
+                </Avatar>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground">Finance Manager</p>
+                <p className="text-sm font-medium truncate">{user!.name ?? ""}</p>
+                <p className="text-xs text-muted-foreground">{user!.email ?? ""}</p>
               </div>
             </div>
           </div>
@@ -134,6 +142,12 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
             {/* Spacer to center the content if needed */}
             <div className="flex-1"></div>
             
+            <div className="flex items-center">
+              <Button variant="ghost" onClick={() => {logout({ logoutParams: { returnTo: window.location.origin } })}}>
+                  <LogOut className="h-5 w-5" /> 
+                  <span className="content-center">Logout</span>
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -143,5 +157,6 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
         </main>
       </div>
     </div>
+    )
   );
 };

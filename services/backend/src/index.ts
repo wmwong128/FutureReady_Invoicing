@@ -104,8 +104,8 @@ app.get('/', async (req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    // const issueremail = req.params.issueremail
-    const invoices = await Invoice.find({});
+    const { issueremail } = req.query
+    const invoices = await Invoice.find({ issueremail: issueremail });
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -159,7 +159,7 @@ app.get('/', async (req, res) => {
 
     try {
       const response = await axios.get("http://localhost:9090/forecast", { 
-        timeout: 3000,
+        timeout: 5000,
       });
       predictionData = response.data;
     } catch (err) {
@@ -206,7 +206,7 @@ app.listen(containerPort, () => {
 app.get('/invoice/:issueremail', async (req, res) => {
   try {
     const issueremail = req.params.issueremail
-    const allInvoicesRaw = await Invoice.find({ issuerEmail: issueremail });
+    const allInvoicesRaw = await Invoice.find({ issueremail: issueremail });
 
     const allInvoices: any[] = [];
 
