@@ -107,7 +107,11 @@ app.get('/', async (req, res) => {
     // const issueremail = req.params.issueremail
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     const invoices = await Invoice.find({});
+=======
+    const invoices = await Invoice.find();
+>>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 =======
     const invoices = await Invoice.find();
 >>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
@@ -1185,6 +1189,10 @@ app.post('/client', async (req, res) => {
     newClientData.totaloutstanding ??= 0;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    newClientData.excluded ??= false;
+>>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 =======
     newClientData.excluded ??= false;
 >>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
