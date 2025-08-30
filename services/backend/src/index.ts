@@ -1155,6 +1155,44 @@ app.get('/client', async (_req, res) => {
   }
 });
 
+app.post('/client', async (req, res) => {
+  try {
+    const newClientData = req.body;
+    newClientData.totalrevenue ??= 0;
+    newClientData.totalinvoices ??= 0;
+    newClientData.totaloutstanding ??= 0;
+    newClientData.averageday = 0;
+    newClientData.stripeCustomerId = null;
+
+    const newClient = new Customer(newClientData);
+    const newCustomer = await newClient.save();
+
+    const riskScore = await calculateCustomerRisk(newCustomer.customerid);
+    const riskLevel = getRiskLevel(riskScore);
+
+    const customer = await Customer.findOneAndUpdate(
+      { customerid: newCustomer.customerid },
+      {
+        $set: {
+          riskscore: riskScore,
+          dangerlevel: riskLevel
+        }
+      },
+      { new: true }
+    );
+
+    res.json({
+      message: "Client created successfully!",
+      customer: customer
+    });
+
+  } catch (err) {
+
+    res.status(500).json({ error: "Something went wrong", details: err });
+  }
+});
+
+
 app.get('/client/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
@@ -1485,6 +1523,7 @@ app.get('/followup/:issueremail', async (req, res) => {
     let firstReminder = 0;
     let finalReminder = 0;
     let dueInform = 0;
+    let reminderStage = null;
 
     for (const invoice of allInvoicesRaw) {
       const order = await Order.findOne({ ordernumber: invoice.ordernumber });
@@ -1498,12 +1537,18 @@ app.get('/followup/:issueremail', async (req, res) => {
       }
 
       if (invoice.followupstage === 1) {
+        reminderStage = "First Reminder";
         firstReminder ++;
       }
+      if (invoice.followupstage === 2) {
+        reminderStage = "Second Reminder";
+      }
       if (invoice.followupstage === 3) {
+        reminderStage = "Final Reminder";
         finalReminder ++;
       }
       if (invoice.followupstage === 4) {
+        reminderStage = "Due Inform";
         dueInform ++
       }
       totalEmail ++;
@@ -1514,6 +1559,7 @@ app.get('/followup/:issueremail', async (req, res) => {
       invObj.sentTime = new Date(invObj.followupdate).toLocaleTimeString();
       invObj.riskscore = customer.riskscore;
       invObj.risk = customer.dangerlevel;
+      invObj.reminderstage = reminderStage;
       allInvoices.push(invObj);
     }
 
