@@ -1175,6 +1175,7 @@ app.post('/client', async (req, res) => {
     newClientData.totalrevenue ??= 0;
     newClientData.totalinvoices ??= 0;
     newClientData.totaloutstanding ??= 0;
+    newClientData.excluded ??= false;
     newClientData.averageday = 0;
     newClientData.stripeCustomerId = null;
 
