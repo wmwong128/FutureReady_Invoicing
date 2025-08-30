@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { AIChat } from "./AIChat";
 
 export const Dashboard = () => {
-    const { dashboardData } = useDashboard()
+    const { dashboardData, revenueForecast, lastMonthWithActual } = useDashboard()
 
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
@@ -38,17 +38,17 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.dashboard?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}
+                            ${dashboardData?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}
                         </div>
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                             <div className={cn(
                                 "flex items-center space-x-1", 
-                                (dashboardData?.dashboard?.mrr?.percentagerevenue ?? 0) >= 0 ? "text-success" : "text-destructive"
+                                (dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? "text-success" : "text-destructive"
                             )}>
-                                {(dashboardData?.dashboard?.mrr?.percentagerevenue ?? 0) >= 0 ? 
+                                {(dashboardData?.mrr?.percentagerevenue ?? 0) >= 0 ? 
                                     (<TrendingUp className="h-3 w-3" />) : (<TrendingDown className="h-3 w-3" />)
                                 }
-                                <span>{Math.abs(dashboardData?.dashboard?.mrr?.percentagerevenue)}%</span>
+                                <span>{Math.abs(dashboardData?.mrr?.percentagerevenue)}%</span>
                             </div>
                             <span>vs lasth month</span>
                         </div>
@@ -63,7 +63,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.dashboard?.arAging?.toLocaleString() ?? 0}
+                            ${dashboardData?.arAging?.toLocaleString() ?? 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -76,7 +76,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            {dashboardData?.dashboard?.dso}
+                            {dashboardData?.dso}
                         </div>
                     </CardContent>
                 </Card>
@@ -89,7 +89,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.dashboard?.debt?.toLocaleString() ?? 0}
+                            ${dashboardData?.debt?.toLocaleString() ?? 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -101,11 +101,11 @@ export const Dashboard = () => {
                     <CardHeader className="flex flex-col justify-start space-y-0 pb-2 text-left">
                         <CardTitle className="text-2xl">Revenue Trend & Forecast</CardTitle>
                         <CardDescription>
-                            Monthly revenue with 90-day forecast and confidence intervals
+                            Monthly revenue with 50-day forecast
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <RevenueChart />
+                        <RevenueChart chartData={revenueForecast ?? []} lastMonthWithActual={lastMonthWithActual ?? ""}/>
                     </CardContent>
                 </Card>
 
@@ -120,19 +120,19 @@ export const Dashboard = () => {
                         <div className="flex items-start space-x-2">
                             <Badge variant="outline" className="bg-success/10 text-success border-success/20">Paid</Badge>
                             <div className="flex flex-col">
-                                {dashboardData?.dashboard?.invoiceStatusList?.totalpaid} invoice(s)
+                                {dashboardData?.invoiceStatusList?.totalpaid} invoice(s)
                             </div>
                         </div>
                         <div className="flex items-start space-x-2">
                             <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Unpaid</Badge>
                             <div className="flex flex-col">
-                                {dashboardData?.dashboard?.invoiceStatusList?.totalunpaid} invoice(s)
+                                {dashboardData?.invoiceStatusList?.totalunpaid} invoice(s)
                             </div>
                         </div>
                         <div className="flex items-start space-x-2">
                             <Badge variant="destructive">Overdue</Badge>
                             <div className="flex flex-col">
-                                {dashboardData?.dashboard?.invoiceStatusList?.totaloverdue} invoice(s)
+                                {dashboardData?.invoiceStatusList?.totaloverdue} invoice(s)
                             </div>
                         </div>
                     </CardContent>

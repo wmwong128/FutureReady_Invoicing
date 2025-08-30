@@ -159,7 +159,7 @@ app.get('/', async (req, res) => {
 
     try {
       const response = await axios.get("http://localhost:9090/forecast", { 
-        timeout: 3000,
+        timeout: 5000,
       });
       predictionData = response.data;
     } catch (err) {
