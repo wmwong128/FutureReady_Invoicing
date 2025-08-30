@@ -343,6 +343,12 @@ app.post('/invoice/:issueremail', async (req, res) => {
     if (!invoiceCustomer){
       return res.status(404).json({ error: "Customer not found" });
     }
+    if (invoiceCustomer.dangerlevel === "HIGH" && invoiceCustomer.excluded === false) {
+      return res.status(403).json({ 
+        created: 0,
+        error: "Customer is high-risk and not on the exclusive list. New invoice was not created." 
+      });
+    }
 
     const orderlines = invoiceData.orderlines.map((line: InvoiceOrderLine, index: number) => ({
       orderlinenumber: index + 1,
@@ -511,6 +517,7 @@ app.post('/invoice/:issueremail', async (req, res) => {
     await session.commitTransaction();
 
     res.status(200).json({ 
+      created: 1,
       message: "Invoice created successfully!",
       invoice: updatedInvoice,
       stripeInvoiceId: stripeInvoice.id

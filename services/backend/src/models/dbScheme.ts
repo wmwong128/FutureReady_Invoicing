@@ -102,6 +102,7 @@ interface ICustomer extends Document {
   totalinvoices: number;
   totaloutstanding: number;
   averageday: number;
+  excluded: boolean;
 }
 
 // Helper function for price formatting
@@ -223,6 +224,11 @@ const customersSchema = new Schema<ICustomer>(
     averageday: {
       type: Number,
       required: true,
+    },
+    excluded : {
+      type: Boolean,
+      required: true,
+      default: false
     }
   },
   { 
