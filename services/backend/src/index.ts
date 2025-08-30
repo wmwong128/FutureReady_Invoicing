@@ -562,6 +562,7 @@ app.post('/invoice/:issueremail', async (req, res) => {
     }
     
     res.status(500).json({ 
+      created: 0,
       error: "Failed to create invoice",
       details: err instanceof Error ? err.message : 'Unknown error'
     });
