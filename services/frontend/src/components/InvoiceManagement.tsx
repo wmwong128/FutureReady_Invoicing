@@ -1,59 +1,14 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-=======
+import { Button } from "@/components/ui/button";
 import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-<<<<<<< HEAD
-import { useInvoiceManagement, useInvoiceStripeView, useSendInvoice } from "@/hooks/useInvoice";
-import { formatDate } from "@/lib/utils";
-=======
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
 import { useDeleteInvoice, useInvoiceManagement, useInvoiceStripeView, useSendInvoice } from "@/hooks/useInvoice";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
-=======
->>>>>>> 9085b61ec266f4f377b1dadeec9451fc20e3bfe0
 import { useQueryClient } from "@tanstack/react-query";
-import { DollarSign, Download, Edit, Eye, Plus, Search, Send } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 export const InvoiceManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -63,8 +18,6 @@ export const InvoiceManagement = () => {
     const navigate = useNavigate();
 
     const { stats, invoices, draftInvoices } = useInvoiceManagement();
-    console.log("invoiceData:", stats);
-
     const { viewInvoicePDF } = useInvoiceStripeView();
     const { sendInvoice } = useSendInvoice(sendInvoiceId);
     const { deleteInvoice } = useDeleteInvoice(deleteInvoiceId);
