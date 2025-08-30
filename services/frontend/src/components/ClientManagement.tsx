@@ -27,7 +27,7 @@ import { useMemo, useState } from "react";
 
 export const ClientManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { customersData = [], isLoading } = useAllCustomer();
+  const { customersData = [] } = useAllCustomer();
 
   console.log("customersData:", customersData);
 
@@ -76,7 +76,6 @@ export const ClientManagement = () => {
     (c) => c.dangerlevel === "High Risk"
   ).length;
 
-  if (isLoading) return <p className="p-6">Loading...</p>;
 
   return (
     <div className="space-y-6 p-6">
