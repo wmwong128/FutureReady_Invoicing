@@ -104,8 +104,8 @@ app.get('/', async (req, res) => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
-    const { issueremail } = req.query
-    const invoices = await Invoice.find({ issueremail: issueremail });
+    // const issueremail = req.params.issueremail
+    const invoices = await Invoice.find();
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
