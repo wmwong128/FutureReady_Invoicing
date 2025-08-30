@@ -11,6 +11,7 @@ import {
 import { Badge } from "./ui/badge";
 import { useDashboard } from "@/hooks/useDashboard";
 import { cn } from "@/lib/utils";
+import { AIChat } from "./AIChat";
 
 export const Dashboard = () => {
     const { dashboardData } = useDashboard()
@@ -137,7 +138,7 @@ export const Dashboard = () => {
                     </CardContent>
                 </Card>
             </div>
-
+            <AIChat></AIChat>
         </div>
     );
 };
