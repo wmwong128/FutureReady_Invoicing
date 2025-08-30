@@ -1,6 +1,6 @@
 import express = require('express');
 import metadata = require('./metadata');
-import type { ICustomer, IInvoice } from "./models/dbScheme";
+import type { IInvoice, ICustomer, IOrder } from "./models/dbScheme";
 import mailing = require('./mailing');
 import Counter = require('./models/countSchema');
 import expressOAuth2JWTBearer = require('express-oauth2-jwt-bearer');
@@ -1155,6 +1155,44 @@ app.get('/client', async (_req, res) => {
   }
 });
 
+app.post('/client', async (req, res) => {
+  try {
+    const newClientData = req.body;
+    newClientData.totalrevenue ??= 0;
+    newClientData.totalinvoices ??= 0;
+    newClientData.totaloutstanding ??= 0;
+    newClientData.averageday = 0;
+    newClientData.stripeCustomerId = null;
+
+    const newClient = new Customer(newClientData);
+    const newCustomer = await newClient.save();
+
+    const riskScore = await calculateCustomerRisk(newCustomer.customerid);
+    const riskLevel = getRiskLevel(riskScore);
+
+    const customer = await Customer.findOneAndUpdate(
+      { customerid: newCustomer.customerid },
+      {
+        $set: {
+          riskscore: riskScore,
+          dangerlevel: riskLevel
+        }
+      },
+      { new: true }
+    );
+
+    res.json({
+      message: "Client created successfully!",
+      customer: customer
+    });
+
+  } catch (err) {
+
+    res.status(500).json({ error: "Something went wrong", details: err });
+  }
+});
+
+
 app.get('/client/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
@@ -1194,42 +1232,6 @@ app.patch('/client/:id', async (req, res) => {
     res.status(500).json({ error: "Something went wrong", details: err });
   }
 });
-
-// app.get('/followup', async (req, res) => {
-//   try {
-//     const allInvoicesRaw = await Invoice.find({
-//       issueremail: req.user?.email,
-//       status: "PENDING",
-//       followupnumber: { $ne: 0 }
-//     })
-//     .sort({ invoicedate: -1 });;
-//     const allInvoices: any[] = [];
-
-//     for (const invoice of allInvoicesRaw) {
-//       const order = await Order.findOne({ ordernumber: invoice.ordernumber });
-//       if (!order) {
-//         return res.status(404).json({ error: "Order not found" });
-//       }
-
-//       const customer = await Customer.findOne({ customerid: order.customerid });
-//       if (!customer) {
-//         return res.status(404).json({ error: "Customer not found" });
-//       }
-
-//       const invObj = invoice.toObject() as any;
-//       invObj.client = customer.name; 
-//       invObj.riskscore = customer.riskscore;
-//       invObj.risk = customer.dangerlevel;
-//       allInvoices.push(invObj);
-//     }
-
-//     res.json(allInvoices);
-
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Something went wrong", details: err });
-//   }
-// });
 
 // app.get('/order', async (_req, res) => {
   
@@ -1521,10 +1523,13 @@ app.get('/followup/:issueremail', async (req, res) => {
     let firstReminder = 0;
     let finalReminder = 0;
     let dueInform = 0;
+    let reminderStage = null;
 
     for (const invoice of allInvoicesRaw) {
       const order = await Order.findOne({ ordernumber: invoice.ordernumber });
-      if (!order) continue;
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
 
       const customer = await Customer.findOne({ customerid: order.customerid });
       if (!customer) {
@@ -1532,12 +1537,18 @@ app.get('/followup/:issueremail', async (req, res) => {
       }
 
       if (invoice.followupstage === 1) {
+        reminderStage = "First Reminder";
         firstReminder ++;
       }
+      if (invoice.followupstage === 2) {
+        reminderStage = "Second Reminder";
+      }
       if (invoice.followupstage === 3) {
+        reminderStage = "Final Reminder";
         finalReminder ++;
       }
       if (invoice.followupstage === 4) {
+        reminderStage = "Due Inform";
         dueInform ++
       }
       totalEmail ++;
@@ -1548,6 +1559,7 @@ app.get('/followup/:issueremail', async (req, res) => {
       invObj.sentTime = new Date(invObj.followupdate).toLocaleTimeString();
       invObj.riskscore = customer.riskscore;
       invObj.risk = customer.dangerlevel;
+      invObj.reminderstage = reminderStage;
       allInvoices.push(invObj);
     }
 
@@ -1568,18 +1580,6 @@ app.get('/followup/:issueremail', async (req, res) => {
     res.status(500).json({ error: "Something went wrong", details: err });
   }
 });
-
-// Helper to translate followupnumber to stage
-function mapReminderStage(followupnumber: number) {
-  switch (followupnumber) {
-    case 72: return "First Reminder";   // 60 days
-    case 30: return "Second Reminder";  // 30 days
-    case 3:  return "Final Reminder";   // 3 days
-    case 0:  return "Due Inform";       // Overdue
-    default: return "Due Inform";
-  }
-}
-
 
 app.get(/(.*)/, (_req, res) => {
     res.status(404).send("Page not found. Please check your URL.");
