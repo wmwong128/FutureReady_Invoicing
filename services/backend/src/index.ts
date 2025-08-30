@@ -341,7 +341,10 @@ app.post('/invoice/:issueremail', async (req, res) => {
 
     const invoiceCustomer = await Customer.findOne({ name: invoiceData.client }).session(session);
     if (!invoiceCustomer){
-      return res.status(404).json({ error: "Customer not found" });
+      return res.status(404).json({ 
+        created: 0,
+        error: "Customer not found" 
+      });
     }
     if (invoiceCustomer.dangerlevel === "HIGH" && invoiceCustomer.excluded === false) {
       return res.status(403).json({ 
@@ -379,7 +382,10 @@ app.post('/invoice/:issueremail', async (req, res) => {
     
     let customer = await Customer.findOne({ customerid: order.customerid }).session(session);
     if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
+      return res.status(404).json({ 
+        created: 0,
+        error: "Customer not found" 
+      });
     }
 
     const issueremail = req.params.issueremail
