@@ -1,8 +1,10 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, AlertCircle } from "lucide-react";
+import { useChatBot } from "@/hooks/useDashboard";
 
 export const AIChat = () => {
     const [messages, setMessages] = useState([
@@ -14,6 +16,8 @@ export const AIChat = () => {
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const { askChatBot } = useChatBot()
+
     const handleSendMessage = () => {
         if (!inputValue.trim()) return;
 
@@ -22,25 +26,32 @@ export const AIChat = () => {
             content: inputValue,
         };
 
-        // Mock AI response based on query
-        let aiResponse = "";
-        if (inputValue.toLowerCase().includes("runway")) {
-            aiResponse = "Based on current burn rate of $32K/month, if sales drop 15%, your runway would decrease to 11.8 months. I recommend focusing on overdue invoices - collecting the $23K outstanding would extend runway by 3 weeks.";
-        } else if (inputValue.toLowerCase().includes("risk")) {
-            aiResponse = "TechCorp Solutions has the highest risk score (87/100) with $12.5K overdue for 12 days. Global Industries is medium risk with payment due tomorrow. Consider prioritizing TechCorp for follow-up.";
-        } else if (inputValue.toLowerCase().includes("forecast")) {
-            aiResponse = "Q2 revenue forecast shows $165K projection with 78% confidence. Key drivers: 3 new clients ($45K) and recurring revenue growth of 8%. Monitor pipeline closely for accuracy.";
-        } else {
-            aiResponse = "I can help you analyze cash flow, forecast revenue, assess client risk, and answer financial questions. Try asking about specific metrics or scenarios!";
-        }
-
-        const assistantMessage = {
-            role: "assistant",
-            content: aiResponse,
-        };
-
-        setMessages([...messages, userMessage, assistantMessage]);
+        setIsLoading(true);
+        setMessages([...messages, userMessage]);
         setInputValue("");
+
+        const payload = {
+            message: inputValue
+        }
+        askChatBot.mutate(payload, {
+            onSuccess: (res) => {
+                setIsLoading(false);
+                const assistantMessage = {
+                    role: "assistant",
+                    content: res.response
+                }
+                setMessages([...messages, userMessage, assistantMessage])
+            },
+            onError: () => {
+                setIsLoading(false);
+                setMessages([...messages, userMessage,
+                    { 
+                        role: 'assistant',
+                        content: 'Something went wrong, please try again later.'
+                    }
+                ])
+            }
+        })
     };
 
     return (
@@ -57,23 +68,23 @@ export const AIChat = () => {
                     {messages.map((message, index) => (
                         <div
                             key={index}
-                            className={`flex space-x-2 items-center ${message.role === "user" ? "justify-end" : "justify-start"
+                            className={`flex space-x-2 ${message.role === "user" ? "justify-end" : "justify-start"
                                 }`}
                         >
                             {message.role === "assistant" && (
-                                <Bot className="h-4 w-4 text-primary" />
+                                <Bot className="h-4 w-4 text-primary mt-2" />
                             )}
                             <div
                                 className={`rounded-lg p-2 max-w-[80%] text-left text-sm ${message.role === "user"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted"
                                     }`}
                             >
-                                {message.content}
+                                <ReactMarkdown>{message.content}</ReactMarkdown>
                             </div>
                         </div>
                     ))}
-                    { isLoading && (
+                    {isLoading && (
                         <div className="flex space-x-2 items-center justify-start">
                             <Bot className="h-4 w-4 text-primary mr-4" />
                             <div className="text-left text-sm text-muted-foreground">
@@ -92,10 +103,11 @@ export const AIChat = () => {
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                         className="flex-1"
+                        disabled={isLoading}
                     />
                     <Button
                         onClick={handleSendMessage}
-                        disabled={!inputValue.trim()}
+                        disabled={!inputValue.trim() || isLoading}
                         size="icon"
                     >
                         <Send className="h-4 w-4" />

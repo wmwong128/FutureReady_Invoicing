@@ -1,6 +1,7 @@
-import type { DashboardResponse } from "@/data/types/Dashboard";
+import type { DashboardData, DashboardResponse, RevenueTrend } from "@/data/types/Dashboard";
 import useMachine from "./useMachine";
 import { useAuth0 } from "@auth0/auth0-react";
+import useMachineMutation from "./useMachineMutation";
 
 export function useDashboard() {
     const { user } = useAuth0()
@@ -12,4 +13,13 @@ export function useDashboard() {
     return {
         dashboardData,
     }
+}
+
+export function useChatBot() {
+    const askChatBot = useMachineMutation({
+        url: `${import.meta.env.VITE_AI_MAIN_URL}/chat`,
+        method: "POST",
+    })
+
+    return { askChatBot };
 }
