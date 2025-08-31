@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
+import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -76,6 +77,19 @@ export const InvoiceManagement = () => {
                 onSuccess: () => {
                     alert(`Invoice deleted`);
                     setDeleteInvoiceId("");
+                    queryClient.invalidateQueries({ queryKey: ["invoiceManagement"] });
+                }
+            }
+        )
+    }
+
+    function handleInvoiceDelete(id: string) {
+        setDeleteInvoiceId(id);
+        deleteInvoice.mutate({},
+            {
+                onSuccess: () => {
+                    alert(`Invoice deleted`);
+                    setDeleteInvoiceId("");
                     queryClient.invalidateQueries(["invoiceManagement"]);
                 }
             }
@@ -111,7 +125,7 @@ export const InvoiceManagement = () => {
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm font-medium text-muted-foreground">Total Outstanding</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats?.totalOutstanding?.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold">${stats?.totalOutstanding?.toFixed(2).toLocaleString() ?? 0}</div>
                         <p className="text-xs text-muted-foreground">Across {stats?.countOutstanding} invoice(s)</p>
                     </CardContent>
                 </Card>
@@ -121,7 +135,7 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-destructive rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">Overdue</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats?.totalOverdue?.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold">${stats?.totalOverdue?.toFixed(2).toLocaleString() ?? 0}</div>
                         <p className="text-xs text-muted-foreground">{stats?.countOverdue} invoice(s)</p>
                     </CardContent>
                 </Card>
@@ -131,7 +145,7 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-success rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">This Month</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats?.thisMonthPaid?.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold">${stats?.thisMonthPaid?.toFixed(2).toLocaleString() ?? 0}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -187,7 +201,7 @@ export const InvoiceManagement = () => {
                                         {invoice.client}
                                     </TableCell>
                                     <TableCell className="font-medium text-left">
-                                        ${invoice.totalamount?.toLocaleString() ?? 0}
+                                        ${invoice.totalamount?.toFixed(2).toLocaleString() ?? 0}
                                     </TableCell>
                                     <TableCell className="text-left">
                                         {getStatusBadge(invoice.status)}
@@ -254,7 +268,7 @@ export const InvoiceManagement = () => {
                                         {invoice.client}
                                     </TableCell>
                                     <TableCell className="font-medium text-left">
-                                        ${invoice.totalamount?.toLocaleString() ?? 0}
+                                        ${invoice.totalamount?.toFixed(2).toLocaleString() ?? 0}
                                     </TableCell>
                                     <TableCell className="text-left">
                                         {formatDate(invoice.duedate)}
@@ -274,11 +288,16 @@ export const InvoiceManagement = () => {
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceSend(invoice._id)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceDelete(invoice._id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceSend(invoice._id)}>
                                                 <Send className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
+                            )})}
                             )})}
                         </TableBody>
                     </Table>
