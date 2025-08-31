@@ -63,7 +63,7 @@ export const InvoiceManagement = () => {
                 onSuccess: () => {
                     alert(`Invoice sent`);
                     setSendInvoiceId("");
-                    queryClient.invalidateQueries(["invoiceManagement"]);
+                    queryClient.invalidateQueries({ queryKey: ["invoiceManagement"] });
                 }
             }
         );
@@ -76,7 +76,7 @@ export const InvoiceManagement = () => {
                 onSuccess: () => {
                     alert(`Invoice deleted`);
                     setDeleteInvoiceId("");
-                    queryClient.invalidateQueries(["invoiceManagement"]);
+                    queryClient.invalidateQueries({ queryKey: ["invoiceManagement"] });
                 }
             }
         )
@@ -111,7 +111,7 @@ export const InvoiceManagement = () => {
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm font-medium text-muted-foreground">Total Outstanding</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats?.totalOutstanding?.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold">${stats?.totalOutstanding?.toFixed(2).toLocaleString() ?? 0}</div>
                         <p className="text-xs text-muted-foreground">Across {stats?.countOutstanding} invoice(s)</p>
                     </CardContent>
                 </Card>
@@ -121,7 +121,7 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-destructive rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">Overdue</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats?.totalOverdue?.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold">${stats?.totalOverdue?.toFixed(2).toLocaleString() ?? 0}</div>
                         <p className="text-xs text-muted-foreground">{stats?.countOverdue} invoice(s)</p>
                     </CardContent>
                 </Card>
@@ -131,7 +131,7 @@ export const InvoiceManagement = () => {
                             <div className="w-3 h-3 bg-success rounded-full" />
                             <span className="text-sm font-medium text-muted-foreground">This Month</span>
                         </div>
-                        <div className="text-2xl font-bold">${stats?.thisMonthPaid?.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold">${stats?.thisMonthPaid?.toFixed(2).toLocaleString() ?? 0}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -187,7 +187,7 @@ export const InvoiceManagement = () => {
                                         {invoice.client}
                                     </TableCell>
                                     <TableCell className="font-medium text-left">
-                                        ${invoice.totalamount?.toLocaleString() ?? 0}
+                                        ${invoice.totalamount?.toFixed(2).toLocaleString() ?? 0}
                                     </TableCell>
                                     <TableCell className="text-left">
                                         {getStatusBadge(invoice.status)}
@@ -254,7 +254,7 @@ export const InvoiceManagement = () => {
                                         {invoice.client}
                                     </TableCell>
                                     <TableCell className="font-medium text-left">
-                                        ${invoice.totalamount?.toLocaleString() ?? 0}
+                                        ${invoice.totalamount?.toFixed(2).toLocaleString() ?? 0}
                                     </TableCell>
                                     <TableCell className="text-left">
                                         {formatDate(invoice.duedate)}
@@ -270,6 +270,10 @@ export const InvoiceManagement = () => {
                                             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => navigate(`/invoice/${invoice._id}/edit`)}>
                                                 <Edit className="h-4 w-4" />
                                             </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceDelete(invoice._id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceSend(invoice._id)}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceDelete(invoice._id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
