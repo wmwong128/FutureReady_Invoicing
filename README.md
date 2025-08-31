@@ -9,10 +9,29 @@
 - RICHIE KHO HUI HUAN
 
 ## 📌 Problem and Solution Summary
+### Pain Point
+The root cause is **ineffective manual invoicing**, which creates payment delays and unclear financial statistics, making decision-making harder.
+Many companies still rely on manual invoicing, leading to 
+- Delayed cash flow
+- Vague financial oversight (budgeting, burn rate, revenue goals)
+- Inefficient manual processes
+
+### Solution (Features)
+By following general invoicing flow, we built an **automated invoicing system** that:
+- Automates **client creditworthiness check** to reduce credit risk
+- Automates **email follow-up reminders** with invoice details and payment link to make chasing payments more time-saving
+- Embeds **Stripe payment portal** in PDF invoices to ease transaction
+- Provides **financial tracking dashboards with predictive trends (via AI model) and AI chatbot** to provide clear business financial oversights and enable data-driven decision-making.
+⚠️ Note: Cash outflow (supplier payments) is not included due to security, complexity and low added value.
 
 ## 🛠️ Technology Stack Used
-
 It is a monorepo based on the [Docker-oriented Cluster Template](https://github.com/RechieKho/docker_oriented_cluster_template) for the invoicing system made for Future Ready Competition.
+**Frontend:** React, Vite
+**Backend:** Node.js, Express
+**Database:** MongoDB
+**AI/ML Tools:** Ollama
+**Other Tools/Services:** ResendAPI, StripeAPI
+**DevOps & Deployment:** Docker
 
 ## ⚙️ Setup Instructions
 
@@ -87,3 +106,19 @@ npm run serve # At root directory.
 This will take a while for the first time, approximately ~30 minutes. After the first build, the following build will be faster since docker cache the builds.
 
 ## 💡 Reflection
+### Challenges
+- Time constraints
+  We had to prioritise core features (invoice automation, follow-up reminder and dashboards) over advanced functionalities.
+- AI limitations
+  Due to limited time, our predictive trend models and chatbot are still in early stages.
+
+### Learnings
+- Building a **modular, Docker-oriented architecture** gave us scalability.
+- Effective team collaboration under time pressure is essential for rapid prototyping.
+
+## Future improvements
+- Fine-tune AI models for more accurate financial predictions.
+- Enhance chatbot capabilities to handle more complex financial queries.
+- Explore integration of cash outflow data.
+- Conduct real-world testing with SMEs to refine workflows.
+
