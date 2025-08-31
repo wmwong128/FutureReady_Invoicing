@@ -1,0 +1,8 @@
+{
+    "backend": "cpu",
+    "per_core_batch_size": 1,
+    "horizon_len": 53,
+    "num_layers": 50,
+    "use_positional_embedding": false,
+    "context_len": 512
+}

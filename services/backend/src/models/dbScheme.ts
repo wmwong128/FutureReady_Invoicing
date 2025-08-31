@@ -54,7 +54,8 @@ interface IInvoice extends Document {
   paymentdate?: Date;
   payday?: number;
   followupdate?: Date;
-  followupnumber?: number;
+  followupstage?: number;
+  emailhtml?: string;
   notes?: string;
 }
 
@@ -101,6 +102,7 @@ interface ICustomer extends Document {
   totalinvoices: number;
   totaloutstanding: number;
   averageday: number;
+  excluded: boolean;
 }
 
 // Helper function for price formatting
@@ -119,11 +121,11 @@ const customersSchema = new Schema<ICustomer>(
       type: String,
       required: false,
       unique: true,
+      sparse: true,
       index: {
         unique: true,
-        partialFilterExpression: { stripeCustomerId: { $type: "string" } } // only enforce uniqueness when it's a string
-      },
-      sparse: true
+        partialFilterExpression: { stripeCustomerId: { $exists: true, $ne: null } }
+      }
     },
     name: {
       type: String,
@@ -222,6 +224,11 @@ const customersSchema = new Schema<ICustomer>(
     averageday: {
       type: Number,
       required: true,
+    },
+    excluded : {
+      type: Boolean,
+      required: true,
+      default: false
     }
   },
   { 
@@ -408,10 +415,15 @@ const invoicesSchema = new Schema<IInvoice>(
       required: false,
       default: null
     },
-    followupnumber: {
+    followupstage: {
       type: Number,
       required: false,
       default: 0
+    },
+    emailhtml: {
+      type: String,
+      required: false,
+      default: null
     },
     notes: {
       type: String,

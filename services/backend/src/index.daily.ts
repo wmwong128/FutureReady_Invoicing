@@ -73,6 +73,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
               <p>Thank you for your prompt attention.</p>
             `;
 
+            const mail = `Dear ${customer.name}, this is a friendly reminder that your invoice ${invoice.invoicenumber} is due in 60 days (due date: ${invoice.duedate.toDateString()}). Please take a moment to review your invoice and ensure payment is arranged in time. You can view and pay the invoice here: ${stripeInvoice.invoice_pdf}. Thank you for your prompt attention.`;
+
             await sendEmail({
               payload: {
                 to: customer.email,
@@ -84,8 +86,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
             await Invoice.updateOne(
               { _id: invoice._id },
               {
-                $set: { followupdate: new Date() },
-                $inc: { followupnumber: 1 }
+                $set: { followupdate: new Date(), emailhtml: mail },
+                $inc: { followupstage: 1 }
               }
             );
 
@@ -104,6 +106,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
               <p>Thank you for your cooperation.</p>
             `;
 
+            const mail = `Dear ${customer.name}, this is a reminder that your invoice ${invoice.invoicenumber} is due in 30 days (due date: ${invoice.duedate.toDateString()}). We kindly request that you arrange payment soon to avoid any late fees or service interruptions. You can review and pay the invoice here: ${stripeInvoice.invoice_pdf}. Thank you for your cooperation.`;
+
             await sendEmail({
               payload: {
                 to: customer.email,
@@ -115,8 +119,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
             await Invoice.updateOne(
               { _id: invoice._id },
               {
-                $set: { followupdate: new Date() },
-                $inc: { followupnumber: 1 }
+                $set: { followupdate: new Date(), emailhtml: mail },
+                $inc: { followupstage: 1 }
               }
             );
 
@@ -125,15 +129,17 @@ const updateInvoiceStatus = async (): Promise<void> => {
           }
         }
 
-        if ((invoice.payday && invoice.payday >= 87 && invoice.payday < 90) || diffDays > 0 && diffDays < 3){
+        if (invoice.payday === 87 || diffDays === 3){
           try {
             const mailhtml =  `
               <p>Dear ${customer.name},</p>
-              <p>This is the final reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>few days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
+              <p>This is the final reminder that your invoice <strong>${invoice.invoicenumber}</strong> is due in <strong>3 days</strong> (due date: ${invoice.duedate.toDateString()}).</p>
               <p>Please ensure payment is completed before the due date to avoid penalties or service suspension.</p>
               <p>You can pay the invoice here: <a href="${stripeInvoice.invoice_pdf}">Pay Invoice</a></p>
               <p>We greatly appreciate your prompt action on this matter.</p>
             `;
+
+            const mail =  `Dear ${customer.name}, this is the final reminder that your invoice ${invoice.invoicenumber} is due in 3 days (due date: ${invoice.duedate.toDateString()}). Please ensure payment is completed before the due date to avoid penalties or service suspension. You can pay the invoice here: ${stripeInvoice.invoice_pdf}. We greatly appreciate your prompt action on this matter.`;
 
             await sendEmail({
               payload: {
@@ -146,8 +152,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
             await Invoice.updateOne(
               { _id: invoice._id },
               {
-                $set: { followupdate: new Date() },
-                $inc: { followupnumber: 1 }
+                $set: { followupdate: new Date(), emailhtml: mail },
+                $inc: { followupstage: 1 }
               }
             );
 
@@ -194,6 +200,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
             <p>Thank you for your prompt attention to this matter.</p>
           `;
 
+          const mail = `Dear ${customer.name}, this is a notice that your invoice ${invoice.invoicenumber} is due today (${invoice.duedate.toDateString()}). If you have already made the payment, please disregard this message. Otherwise, we kindly request you to complete the payment immediately to avoid any late fees or service interruptions. You can review and pay your invoice here: ${stripeInvoice.invoice_pdf}. Thank you for your prompt attention to this matter.`;
+
           await sendEmail({
             payload: {
               to: customer.email,
@@ -205,8 +213,8 @@ const updateInvoiceStatus = async (): Promise<void> => {
           await Invoice.updateOne(
             { _id: invoice._id },
             {
-              $set: { followupdate: new Date() },
-              $inc: { followupnumber: 1 }
+              $set: { followupdate: new Date(), emailhtml: mail },
+              $inc: { followupstage: 1 }
             }
           );
 
