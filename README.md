@@ -17,7 +17,7 @@ The root cause is **ineffective manual invoicing**, which creates payment delays
 
 ### Solution (Features)
 By following general invoicing flow, we built an **automated invoicing system** that:
-- Automates **client creditworthiness check** to reduce credit risk.
+- Automates **client creditworthiness check** using set thresholds to reduce credit risk.
 - Automates **email follow-up reminders** with invoice details and payment link to make chasing payments more time-saving.
 - Embeds **Stripe payment portal** in PDF invoices to ease transaction.
 - Provides **financial tracking dashboards with predictive trends (via AI model) and AI chatbot** to provide clear business financial oversights and enable data-driven decision-making.
