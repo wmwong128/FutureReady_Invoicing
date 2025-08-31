@@ -38,7 +38,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.mrr?.monthlyrevenue?.toLocaleString() ?? 0}
+                            ${dashboardData?.mrr?.monthlyrevenue?.toFixed(2).toLocaleString() ?? 0}
                         </div>
                         <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                             <div className={cn(
@@ -63,7 +63,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.arAging?.toLocaleString() ?? 0}
+                            ${dashboardData?.arAging?.toFixed(2).toLocaleString() ?? 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -89,7 +89,7 @@ export const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col items-start">
                         <div className="text-2xl font-bold text-foreground items">
-                            ${dashboardData?.debt?.toLocaleString() ?? 0}
+                            ${dashboardData?.debt?.toFixed(2).toLocaleString() ?? 0}
                         </div>
                     </CardContent>
                 </Card>

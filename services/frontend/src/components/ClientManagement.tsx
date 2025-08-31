@@ -195,7 +195,7 @@ export const ClientManagement = () => {
       Total Revenue
     </span>
     <div className="mt-2 text-2xl font-bold">
-      MYR {totalRevenue.toLocaleString()}
+      ${totalRevenue.toFixed(2).toLocaleString()}
     </div>
     <p className="text-xs text-muted-foreground">All time</p>
   </CardContent>
@@ -267,7 +267,7 @@ export const ClientManagement = () => {
                   <TableCell className="text-left">
                     <div>
                       <p className="font-medium">
-                        MYR {customersData.totalrevenue?.toLocaleString()}
+                        ${customersData.totalrevenue?.toFixed(2).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {customersData.totalinvoices} invoices
@@ -282,7 +282,7 @@ export const ClientManagement = () => {
                           : "text-muted-foreground"
                       }
                     >
-                      MYR {customersData.totaloutstanding?.toLocaleString()}
+                      ${customersData.totaloutstanding?.toFixed(2).toLocaleString()}
                     </span>
                   </TableCell>
                   <TableCell className="text-left">

@@ -105,11 +105,7 @@ app.get('/', async (req, res) => {
     sixtyDaysAgo.setDate(now.getDate() - 60);
 
     // const issueremail = req.params.issueremail
-<<<<<<< HEAD
-    const invoices = await Invoice.find({});
-=======
     const invoices = await Invoice.find();
->>>>>>> origin/main
 
     let monthlyrevenue = 0;
     let lastmonthrevenue = 0;
@@ -1179,10 +1175,7 @@ app.post('/client', async (req, res) => {
     newClientData.totalrevenue ??= 0;
     newClientData.totalinvoices ??= 0;
     newClientData.totaloutstanding ??= 0;
-<<<<<<< HEAD
-=======
     newClientData.excluded ??= false;
->>>>>>> origin/main
     newClientData.averageday = 0;
     newClientData.stripeCustomerId = null;
 

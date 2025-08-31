@@ -68,7 +68,7 @@ export const AIChat = () => {
                     {messages.map((message, index) => (
                         <div
                             key={index}
-                            className={`flex space-x-2 ${message.role === "user" ? "justify-end" : "justify-start"
+                            className={`flex space-x-2${message.role === "user" ? "justify-end" : "justify-start"
                                 }`}
                         >
                             {message.role === "assistant" && (
