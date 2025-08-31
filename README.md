@@ -10,17 +10,21 @@
 
 ## 📌 Problem and Solution Summary
 ### Pain Point
-The root cause is **ineffective manual invoicing**, which creates payment delays and unclear financial statistics, making decision-making harder.
+The root cause is **ineffective manual invoicing**, which creates snowball effect on payment delays and unclear financial statistics, making decision-making harder.
 - Delayed cash flow -> Clients delay payments due to manual processes like follow-up.
 - Vague financial oversight -> Without dashboard, financial data are often based on guesswork.
 - Inefficient manual processes -> Employees spend hours chasing payments, updating spreadsheets, and sending follow-up emails instead of focusing on growth. 
 
-### Solution (Features)
-By following general invoicing flow, we built an **automated invoicing system** that:
-- Automates **client creditworthiness check** using set thresholds to reduce credit risk.
-- Automates **email follow-up reminders** with invoice details and payment link to make chasing payments more time-saving.
-- Embeds **Stripe payment portal** in PDF invoices to ease transaction.
-- Provides **financial tracking dashboards with predictive trends (via AI model) and AI chatbot** to provide clear business financial oversights and enable data-driven decision-making.
+### Solution 
+By following stages in the Cash Inflow Process, we built an **automated, easily-integrated invoice tracking and management system** that:
+| Stage              | Feature                                             | Business Impact |
+|--------------------|-----------------------------------------------------|-----------------|
+| **1. Credit Approval** | Client creditworthiness checks using predefined thresholds | Reduce credit risk by preventing unreliable clients from receiving invoices |
+| **2. Invoice Creation** | Dual-mode Invoicing System (Manual + Automatic) | Accelerate billing cycles and minimize manual workload |
+| **3. Invoice Sending** | Auto invoice emailing to clients | Ensure timely delivery and speed up billing cycles |
+| **4. Client Follow-Up** | Automated email follow-up reminders | Save time chasing payments and improve collection rates |
+| **5. Payment Processing** | Digital payment portal (Stripe) embedded in PDF invoices | Simplify transactions and encourage faster payments |
+| **6. Financial Recording** | Financial dashboards with predictive models & AI chatbot | Provide clear financial oversight and enable data-driven decision-making |
 
 ⚠️ Note: Cash outflow (supplier payments) is not included due to security, complexity and low added value.
 
