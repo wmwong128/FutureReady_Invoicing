@@ -1,157 +1,213 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  MoreHorizontal, 
-  Search, 
-  Plus, 
-  Eye, 
-  Edit, 
-  Mail,
-  Phone,
+import { useAllCustomer } from "@/hooks/useAllCustomer";
+import {
+  AlertTriangle,
   Building,
-  TrendingUp,
-  AlertTriangle
+  DollarSign,
+  Edit,
+  Eye,
+  Mail,
+  MoreHorizontal,
+  Phone,
+  Plus,
+  Search,
+  TrendingUp
 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ClientForm } from "./ClientForm";
+
 
 export const ClientManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { customersData = [] } = useAllCustomer();
+  const navigate = useNavigate();
+  const [showForm, setShowForm] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
 
-  const clients = [
-    {
-      id: "CLI-001",
-      name: "TechCorp Solutions",
-      email: "billing@techcorp.com",
-      phone: "+1 (555) 123-4567",
-      totalInvoices: 8,
-      totalAmount: 45600,
-      outstanding: 12500,
-      riskScore: 87,
-      lastPayment: "2023-12-15",
-      avgPaymentDays: 35
-    },
-    {
-      id: "CLI-002", 
-      name: "Global Industries",
-      email: "finance@globalinc.com",
-      phone: "+1 (555) 234-5678",
-      totalInvoices: 12,
-      totalAmount: 78900,
-      outstanding: 8750,
-      riskScore: 42,
-      lastPayment: "2024-01-20",
-      avgPaymentDays: 25
-    },
-    {
-      id: "CLI-003",
-      name: "StartupXYZ",
-      email: "admin@startupxyz.com",
-      phone: "+1 (555) 345-6789",
-      totalInvoices: 4,
-      totalAmount: 18200,
-      outstanding: 0,
-      riskScore: 23,
-      lastPayment: "2024-01-25",
-      avgPaymentDays: 18
-    },
-    {
-      id: "CLI-004",
-      name: "Enterprise Ltd",
-      email: "ap@enterprise.com",
-      phone: "+1 (555) 456-7890",
-      totalInvoices: 15,
-      totalAmount: 89400,
-      outstanding: 15600,
-      riskScore: 35,
-      lastPayment: "2024-01-10",
-      avgPaymentDays: 28
-    },
-    {
-      id: "CLI-005",
-      name: "Innovation Corp",
-      email: "billing@innovationcorp.com",
-      phone: "+1 (555) 567-8901",
-      totalInvoices: 6,
-      totalAmount: 32100,
-      outstanding: 9800,
-      riskScore: 28,
-      lastPayment: "2024-01-18",
-      avgPaymentDays: 22
-    }
-  ];
+  console.log("customersData:", customersData);
 
-  const getRiskBadge = (score: number) => {
-    if (score >= 70) return <Badge variant="destructive">High Risk</Badge>;
-    if (score >= 40) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Medium Risk</Badge>;
-    return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Low Risk</Badge>;
+  const handleNewClient = () => {
+    setEditingClient(null);
+    setShowForm(true);
   };
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleEditClient = (client: any) => {
+    setEditingClient(client);
+    setShowForm(true);
+  };
+
+  const handleBackToList = () => {
+    setShowForm(false);
+    setEditingClient(null);
+  };
+
+  const handleSaveClient = (clientData: any) => {
+    // In a real app, this would save to the database
+    console.log("Saving client:", clientData);
+    setShowForm(false);
+    setEditingClient(null);
+    // You could show a toast notification here
+  };
+
+
+
+  
+  if (showForm) {
+    return (
+      <ClientForm
+        mode={editingClient ? "edit" : "new"}
+        clientData={editingClient}
+        onBack={handleBackToList}
+        onSave={handleSaveClient}
+      />
+    );
+  }
+
+  const getRiskBadge = (risk?: string) => {
+    if (risk === "High Risk")
+      return <Badge variant="destructive">High Risk</Badge>;
+    if (risk === "Medium Risk")
+      return (
+        <Badge
+          variant="outline"
+          className="bg-warning/10 text-warning border-warning/20"
+        >
+          Medium Risk
+        </Badge>
+      );
+    return (
+      <Badge
+        variant="outline"
+        className="bg-success/10 text-success border-success/20"
+      >
+        Low Risk
+      </Badge>
+    );
+  };
+
+  const filteredClients = useMemo(() => {
+    return customersData.filter(
+      (customersData) =>
+        customersData.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customersData.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [customersData, searchTerm]);
+
+
+  //  Stats
+  const totalClients = customersData.length;
+  const totalRevenue = customersData.reduce(
+    (sum, c) => sum + (c.totalrevenue || 0),
+    0
   );
+  const avgPaymentDays =
+    customersData.reduce((sum, c) => sum + (c.averageday || 0), 0) /
+    (totalClients || 1);
+  const highRisk = customersData.filter(
+    (c) => c.dangerlevel === "High Risk"
+  ).length;
+
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
       {/* Header */}
-      <div className="flex flex-col items-start">
-          <h1 className="text-3xl font-bold tracking-tight">Client Management</h1>
-          <p className="text-muted-foreground">Manage your client relationships and payment history</p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start pb-2 text-left">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+          Client Management
+          </h1>
+          <p className="text-muted-foreground">
+          Manage your client relationships and payment history
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+                            {/* <Button variant="default" onClick={handleNewClient}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Client
+                            </Button> */}
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <Building className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Total Clients</span>
-            </div>
-            <div className="text-2xl font-bold">{clients.length}</div>
-            <p className="text-xs text-muted-foreground">Active relationships</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Avg Payment Days</span>
-            </div>
-            <div className="text-2xl font-bold">26</div>
-            <p className="text-xs text-muted-foreground">-2 vs last quarter</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              <span className="text-sm font-medium text-muted-foreground">High Risk</span>
-            </div>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">Requires attention</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-revenue rounded-full" />
-              <span className="text-sm font-medium text-muted-foreground">Total Revenue</span>
-            </div>
-            <div className="text-2xl font-bold">$264K</div>
-            <p className="text-xs text-muted-foreground">All time</p>
-          </CardContent>
-        </Card>
-      </div>
+<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 ">
+  <Card>
+  <CardContent className="space-y-1 text-left">
+    <div className="flex items-center justify-between text-muted-foreground">
+      <span className="text-sm font-medium text-muted-foreground">
+        Total Clients
+      </span>
+      <Building className="h-4 w-4 ml-2" />
+    </div>
+    <div className="mt-2 text-2xl font-bold">{totalClients}</div>
+    <p className="text-xs text-muted-foreground">Active relationships</p>
+  </CardContent>
+</Card>
+
+  {/* Avg Payment Days */}
+<Card>
+  <CardContent className="space-y-1 text-left relative">
+    <div className="absolute top-3 right-6 text-muted-foreground">
+      <TrendingUp className="h-4 w-4" />
+    </div>
+    <span className="text-sm font-medium text-muted-foreground">
+      Avg Payment Days
+    </span>
+    <div className="mt-2 text-2xl font-bold">
+      {Math.round(avgPaymentDays)}
+    </div>
+    <p className="text-xs text-muted-foreground">-2 vs last quarter</p>
+  </CardContent>
+</Card>
+
+  {/* High Risk */}
+<Card>
+  <CardContent className="space-y-1 text-left relative">
+    <div className="absolute top-3 right-6 text-warning">
+      <AlertTriangle className="h-4 w-4" />
+    </div>
+    <span className="text-sm font-medium text-muted-foreground">
+      High Risk
+    </span>
+    <div className="mt-2 text-2xl font-bold">{highRisk}</div>
+    <p className="text-xs text-muted-foreground">Requires attention</p>
+  </CardContent>
+</Card>
+
+{/* Total Revenue */}
+<Card>
+  <CardContent className="space-y-1 text-left relative">
+    <div className="absolute top-3 right-6">
+      <DollarSign className="h-4 w-4 text-revenue" />
+    </div>
+    <span className="text-sm font-medium text-muted-foreground">
+      Total Revenue
+    </span>
+    <div className="mt-2 text-2xl font-bold">
+      ${totalRevenue.toFixed(2).toLocaleString()}
+    </div>
+    <p className="text-xs text-muted-foreground">All time</p>
+  </CardContent>
+</Card>
+
+</div>
+
+
+
+
+
+
 
       {/* Clients Table */}
       <Card>
@@ -179,49 +235,67 @@ export const ClientManagement = () => {
                 <TableHead>Outstanding</TableHead>
                 <TableHead>Avg Days</TableHead>
                 <TableHead>Risk Level</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id} className="hover:bg-muted/50">
-                  <TableCell>
+              {filteredClients.map((customersData) => (
+                <TableRow
+                  key={customersData._id}
+                  className="hover:bg-muted/50"
+                >
+                  <TableCell className="text-left">
                     <div>
-                      <p className="font-medium">{client.name}</p>
-                      <p className="text-xs text-muted-foreground">{client.id}</p>
+                      <p className="font-medium">{customersData.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {customersData.customerid}
+                      </p>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1">
                         <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs">{client.email}</span>
+                        <span className="text-xs">{customersData.email}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs">{client.phone}</span>
+                        <span className="text-xs">{customersData.phone}</span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <div>
-                      <p className="font-medium">${client.totalAmount.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">{client.totalInvoices} invoices</p>
+                      <p className="font-medium">
+                        ${customersData.totalrevenue?.toFixed(2).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {customersData.totalinvoices} invoices
+                      </p>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <span className={client.outstanding > 0 ? "text-warning font-medium" : "text-muted-foreground"}>
-                      ${client.outstanding.toLocaleString()}
+                  <TableCell className="text-left">
+                    <span
+                      className={
+                        customersData.totaloutstanding && customersData.totaloutstanding > 0
+                          ? "text-warning font-medium"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      ${customersData.totaloutstanding?.toFixed(2).toLocaleString()}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <span className={client.avgPaymentDays > 30 ? "text-warning" : "text-success"}>
-                      {client.avgPaymentDays} days
+                  <TableCell className="text-left">
+                    <span
+                      className={
+                        customersData.averageday && customersData.averageday > 30
+                          ? "text-warning"
+                          : "text-success"
+                      }
+                    >
+                      {customersData.averageday} days
                     </span>
                   </TableCell>
-                  <TableCell>
-                    {getRiskBadge(client.riskScore)}
-                  </TableCell>
+                  <TableCell className="text-left">{getRiskBadge(customersData.dangerlevel)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -247,3 +321,5 @@ export const ClientManagement = () => {
     </div>
   );
 };
+
+
