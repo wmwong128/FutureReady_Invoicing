@@ -83,7 +83,7 @@ export const Dashboard = () => {
                 <Card className="hover:shadow-md transition-all duration-200 gap-2 justify-between">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground text-left">
-                            Debt
+                            Expenses
                         </CardTitle>
                         <HandCoins className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
