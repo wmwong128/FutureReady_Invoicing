@@ -123,6 +123,7 @@ Due to limited time, our predictive trend models and chatbot are still in early 
 ### Future improvements
 - Fine-tune AI models for more accurate financial predictions.
 - Enhance chatbot capabilities to handle more complex financial queries.
+- Add a Purchase Order tab to link invoices directly to orders.
 - Explore integration of cash outflow data.
 - Conduct real-world testing with SMEs to refine workflows.
 
