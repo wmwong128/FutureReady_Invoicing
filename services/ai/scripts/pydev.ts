@@ -5,4 +5,4 @@ import pyvenv = require("./pyvenv");
 const args = process.argv.slice(2);
 const appPath = path.join(metadata.projectDirectory, "src", "main.py");
 
-pyvenv.runPython(`-m flask --app ${appPath} run --debug ${args}`);
+pyvenv.runPython(`${appPath}`);

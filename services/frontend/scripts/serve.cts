@@ -1,4 +1,4 @@
-import metadata = require('./metadata');
+import metadata = require('./metadata.cjs');
 import ChildProcess = require('child_process');
 
 const { execSync } = ChildProcess;

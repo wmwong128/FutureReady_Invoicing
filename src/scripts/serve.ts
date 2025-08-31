@@ -24,6 +24,7 @@ fs.readdirSync(path.join(projectDirectory, clusterDirectory)).forEach(
     console.log(`Activating ${serviceName}`);
     execSync(`npm install && npm run serve`, {
       cwd: serviceDirectory,
+      stdio: 'inherit',
     });
   }
 );

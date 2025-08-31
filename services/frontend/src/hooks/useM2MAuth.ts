@@ -24,7 +24,8 @@ export default function useM2MAuth(options?: UseM2MAuthOptions) {
         return Promise.reject(new Error('Unable to fetch JWT.'));
       }
 
-      return await response.json();
+      const result = await response.json();
+      return result;
     },
     ...options,
   });

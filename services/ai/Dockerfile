@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --no-upgrade -y \
     gcc \
     g++ \
     nodejs \

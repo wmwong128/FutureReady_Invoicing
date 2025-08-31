@@ -261,7 +261,8 @@ def chat():
         }
 
         try:
-            response = requests.post(url, json=payload)
+            print(json.dumps(payload))
+            response = requests.post(url, data=json.dumps(payload))
             response.raise_for_status()  # Raise an exception for bad status codes
             json_data = response.json()
             if "message" in json_data and "content" in json_data["message"]:
@@ -271,6 +272,7 @@ def chat():
         except requests.RequestException as e:
             return jsonify({"error": f"Failed to connect to Ollama: {str(e)}"}), 500
         except json.JSONDecodeError:
+            print("JSON")
             return jsonify({"error": "Failed to parse response from Ollama"}), 500
 
     except Exception as e:

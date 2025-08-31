@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "serve": "npm run build && node ./scripts.gen.local/serve.js"
+    "serve": "npm run build && node ./scripts.gen.local/serve.cjs"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.4.0",
@@ -16,6 +16,7 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
@@ -28,7 +29,7 @@
     "next-themes": "^0.4.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-markdown": "^8.0.6",
+    "react-markdown": "^9.1.0",
     "react-router-dom": "^7.8.1",
     "recharts": "^3.1.2",
     "sonner": "^2.0.7",
@@ -39,7 +40,7 @@
     "@tailwindcss/vite": "^4.1.12",
     "@types/axios": "^0.9.36",
     "@types/node": "^24.3.0",
-    "@types/react": "^19.1.9",
+    "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.7",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.7.0",
