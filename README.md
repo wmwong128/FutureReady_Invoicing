@@ -108,9 +108,9 @@ This will take a while for the first time, approximately ~30 minutes. After the 
 ## 💡 Reflection
 ### Challenges
 - Time constraints
-  We had to prioritise core features (invoice automation, follow-up reminder and dashboards) over advanced functionalities.
+We had to prioritise core features (invoice automation, follow-up reminder and dashboards) over advanced functionalities.
 - AI limitations
-  Due to limited time, our predictive trend models and chatbot are still in early stages.
+Due to limited time, our predictive trend models and chatbot are still in early stages.
 
 ### Learnings
 - Building a **modular, Docker-oriented architecture** gave us scalability.
