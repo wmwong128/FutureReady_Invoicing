@@ -11,16 +11,15 @@
 ## 📌 Problem and Solution Summary
 ### Pain Point
 The root cause is **ineffective manual invoicing**, which creates payment delays and unclear financial statistics, making decision-making harder.
-Many companies still rely on manual invoicing, leading to 
-- Delayed cash flow
-- Vague financial oversight (budgeting, burn rate, revenue goals)
-- Inefficient manual processes
+- Delayed cash flow -> Clients delay payments due to manual processes like follow-up.
+- Vague financial oversight -> Without dashboard, financial data are often based on guesswork.
+- Inefficient manual processes -> Employees spend hours chasing payments, updating spreadsheets, and sending follow-up emails instead of focusing on growth. 
 
 ### Solution (Features)
-By following general invoicing flow, we built an **automated invoicing system** that:
-- Automates **client creditworthiness check** to reduce credit risk
-- Automates **email follow-up reminders** with invoice details and payment link to make chasing payments more time-saving
-- Embeds **Stripe payment portal** in PDF invoices to ease transaction
+By following general invoicing flow, we built an **automated invoicing system** that
+- Automates **client creditworthiness check** to reduce credit risk.
+- Automates **email follow-up reminders** with invoice details and payment link to make chasing payments more time-saving.
+- Embeds **Stripe payment portal** in PDF invoices to ease transaction.
 - Provides **financial tracking dashboards with predictive trends (via AI model) and AI chatbot** to provide clear business financial oversights and enable data-driven decision-making.
 
 ⚠️ Note: Cash outflow (supplier payments) is not included due to security, complexity and low added value.
