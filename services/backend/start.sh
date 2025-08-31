@@ -10,7 +10,7 @@ stripe listen --forward-to localhost:8080/webhook/stripe &
 STRIPE_PID=$!
 
 # Start your Node.js server
-npm run dev-noauth
+npm run dev
 
 # If the server stops, also stop Stripe listener
 kill $STRIPE_PID

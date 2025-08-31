@@ -1069,6 +1069,14 @@ app.post("/invoice/:issueremail/:id/send", async (req, res) => {
     if (!dbInvoice.stripeinvoiceid) {
       return res.status(400).json({ error: "No Stripe invoice ID found" });
     };
+    const order = await Order.findOne({ ordernumber: dbInvoice.ordernumber });
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const customer = await Customer.findOne({ customerid: order.customerid });
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    };
 
     stripeInvoice = await stripe.invoices.finalizeInvoice(dbInvoice.stripeinvoiceid);
 
@@ -1085,7 +1093,7 @@ app.post("/invoice/:issueremail/:id/send", async (req, res) => {
     try {
       await sendEmail({
         payload: {
-          to: 'tengstc@gmail.com', 
+          to: customer.email, 
           subject: `Invoice ${updatedInvoice.invoicenumber}`,
           html: `<p>Hello, your invoice <strong>${updatedInvoice.invoicenumber}</strong> is ready.<br/>
                   View Stripe Invoice <a href="${stripeInvoice.invoice_pdf}">here</a>.</p>`,
@@ -1096,15 +1104,6 @@ app.post("/invoice/:issueremail/:id/send", async (req, res) => {
     };
 
     await session.commitTransaction();
-
-    const order = await Order.findOne({ ordernumber: dbInvoice.ordernumber });
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-    const customer = await Customer.findOne({ customerid: order.customerid });
-    if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
-    };
 
     const riskScore = await calculateCustomerRisk(customer.customerid);
     const riskLevel = getRiskLevel(riskScore);
