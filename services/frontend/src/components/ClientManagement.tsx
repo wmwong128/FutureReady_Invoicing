@@ -235,7 +235,6 @@ export const ClientManagement = () => {
                 <TableHead>Outstanding</TableHead>
                 <TableHead>Avg Days</TableHead>
                 <TableHead>Risk Level</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

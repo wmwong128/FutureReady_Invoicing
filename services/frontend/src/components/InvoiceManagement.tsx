@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
-import { DollarSign, Download, Edit, Eye, Filter, Plus, Search, Send, Trash2, } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -64,7 +63,7 @@ export const InvoiceManagement = () => {
                 onSuccess: () => {
                     alert(`Invoice sent`);
                     setSendInvoiceId("");
-                    queryClient.invalidateQueries(["invoiceManagement"]);
+                    queryClient.invalidateQueries({ queryKey: ["invoiceManagement"] });
                 }
             }
         );
@@ -83,18 +82,6 @@ export const InvoiceManagement = () => {
         )
     }
 
-    function handleInvoiceDelete(id: string) {
-        setDeleteInvoiceId(id);
-        deleteInvoice.mutate({},
-            {
-                onSuccess: () => {
-                    alert(`Invoice deleted`);
-                    setDeleteInvoiceId("");
-                    queryClient.invalidateQueries(["invoiceManagement"]);
-                }
-            }
-        )
-    }
 
     return (
         <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-muted/30">
@@ -190,7 +177,6 @@ export const InvoiceManagement = () => {
                                 <TableHead>Status</TableHead>
                                 <TableHead>Due Date</TableHead>
                                 <TableHead>Risk Score</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -288,6 +274,7 @@ export const InvoiceManagement = () => {
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceSend(invoice._id)}>
+                                            </Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDisable} onClick={() => handleInvoiceDelete(invoice._id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -295,9 +282,8 @@ export const InvoiceManagement = () => {
                                                 <Send className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                    </TableCell>
+                                        </TableCell>
                                 </TableRow>
-                            )})}
                             )})}
                         </TableBody>
                     </Table>
