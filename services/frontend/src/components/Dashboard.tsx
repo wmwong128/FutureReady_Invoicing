@@ -7,8 +7,6 @@ import {
     HandCoins,
     TrendingUp,
     TrendingDown,
-    TrendingUp,
-    TrendingDown,
 } from 'lucide-react';
 import { Badge } from "./ui/badge";
 import { useDashboard } from "@/hooks/useDashboard";
