@@ -27,12 +27,12 @@ By following general invoicing flow, we built an **automated invoicing system** 
 
 ## 🛠️ Technology Stack Used
 It is a monorepo based on the [Docker-oriented Cluster Template](https://github.com/RechieKho/docker_oriented_cluster_template) for the invoicing system made for Future Ready Competition.
-**Frontend:** React, Vite
-**Backend:** Node.js, Express
-**Database:** MongoDB
-**AI/ML Tools:** Ollama
-**Other Tools/Services:** ResendAPI, StripeAPI
-**DevOps & Deployment:** Docker
+- **Frontend:** React, Vite
+- **Backend:** Node.js, Express
+- **Database:** MongoDB
+- **AI/ML Tools:** Ollama
+- **Other Tools/Services:** ResendAPI, StripeAPI
+- **DevOps & Deployment:** Docker
 
 ## ⚙️ Setup Instructions
 
@@ -117,7 +117,7 @@ This will take a while for the first time, approximately ~30 minutes. After the 
 - Building a **modular, Docker-oriented architecture** gave us scalability.
 - Effective team collaboration under time pressure is essential for rapid prototyping.
 
-## Future improvements
+### Future improvements
 - Fine-tune AI models for more accurate financial predictions.
 - Enhance chatbot capabilities to handle more complex financial queries.
 - Explore integration of cash outflow data.
