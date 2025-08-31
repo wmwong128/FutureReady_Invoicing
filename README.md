@@ -16,7 +16,7 @@ The root cause is **ineffective manual invoicing**, which creates payment delays
 - Inefficient manual processes -> Employees spend hours chasing payments, updating spreadsheets, and sending follow-up emails instead of focusing on growth. 
 
 ### Solution (Features)
-By following general invoicing flow, we built an **automated invoicing system** that
+By following general invoicing flow, we built an **automated invoicing system** that:
 - Automates **client creditworthiness check** to reduce credit risk.
 - Automates **email follow-up reminders** with invoice details and payment link to make chasing payments more time-saving.
 - Embeds **Stripe payment portal** in PDF invoices to ease transaction.
