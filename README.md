@@ -39,7 +39,7 @@ It is a monorepo based on the [Docker-oriented Cluster Template](https://github.
 
 ## ⚙️ Setup Instructions
 
-⚠️ Caution During Setup
+### ⚠️ Caution During Setup
 1) Python Version Requirement
   - Ensure your system is using Python 3.11.
   - Other versions (e.g., 3.12, 3.13) may cause incompatibility issues.
@@ -51,7 +51,7 @@ It is a monorepo based on the [Docker-oriented Cluster Template](https://github.
   services/backend/.env → RESEND_API_KEY
   ```
 
-⚙️ Start Setup
+### ⚙️ Start Setup
 Install the dependencies:
 
 - [docker](https://docs.docker.com/desktop/)
