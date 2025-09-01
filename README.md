@@ -47,9 +47,7 @@ It is a monorepo based on the [Docker-oriented Cluster Template](https://github.
 2) Resend API Limitation
   - The current setup uses the Resend free plan, which only allows sending emails to the email address of the API key creator.
   - If you want to test email delivery to other addresses, you need to generate your own API key from Resend and update it in:
-  ```sh
-  services/backend/.env → RESEND_API_KEY
-  ```
+    -  `services/backend/.env` → RESEND_API_KEY
 
 ### ⚙️ Start Setup
 Install the dependencies:
