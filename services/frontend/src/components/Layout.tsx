@@ -62,10 +62,10 @@ export const Layout = ({ children, activeTab, onTabChange }: LayoutProps) => {
                 </div>
                 <div>
                   <h1 className="font-bold text-lg text-foreground">
-                    Finance Copilot
+                    AutoInvoice
                   </h1>
                   <p className="text-xs text-muted-foreground">
-                    AI Operations Assistant
+                    Makes Invoicing Easy
                   </p>
                 </div>
               </div>

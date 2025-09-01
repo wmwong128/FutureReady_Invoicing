@@ -28,7 +28,7 @@ import { ClientForm } from './ClientForm';
 
 export const ClientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { customersData = [] } = useAllCustomer();
+  const { customersData = [], highriskcounts } = useAllCustomer();
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
 
@@ -173,7 +173,7 @@ export const ClientManagement = () => {
             <span className="text-sm font-medium text-muted-foreground">
               High Risk
             </span>
-            <div className="mt-2 text-2xl font-bold">{highRisk}</div>
+            <div className="mt-2 text-2xl font-bold">{highriskcounts}</div>
             <p className="text-xs text-muted-foreground">Requires attention</p>
           </CardContent>
         </Card>
