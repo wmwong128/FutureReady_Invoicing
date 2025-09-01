@@ -69,7 +69,7 @@ export const ClientManagement = () => {
   }
 
   const getRiskBadge = (risk?: string) => {
-    if (risk === 'High Risk')
+    if (risk === 'HIGH')
       return <Badge variant="destructive">High Risk</Badge>;
     if (risk === 'Medium Risk')
       return (
