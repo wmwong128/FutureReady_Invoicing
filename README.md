@@ -39,6 +39,17 @@ It is a monorepo based on the [Docker-oriented Cluster Template](https://github.
 
 ## ⚙️ Setup Instructions
 
+⚠️ Caution During Setup
+1) Python Version Requirement
+  - Ensure your system is using Python 3.11. Other versions (e.g., 3.12, 3.13) may cause incompatibility issues.
+
+2) Resend API Limitation
+  - The current setup uses the Resend free plan, which only allows sending emails to the email address of the API key creator.
+  - If you want to test email delivery to other addresses, you need to generate your own API key from Resend and update it in:
+  ```sh
+  services/backend/.env → RESEND_API_KEY
+  ```
+
 Install the dependencies:
 
 - [docker](https://docs.docker.com/desktop/)
@@ -100,6 +111,19 @@ cd services/frontend && npm install # install frontend dependencies.
 cd ../../services/backend && npm install # install backend dependencies.
 cd ../../services/ai && npm install # install ai dependencies.
 ```
+
+After installing the dependencies, you must change the following script files from CRLF → LF before building Docker:
+```sh
+services\backend\docker\scripts\start.sh
+services\backend\docker\scripts\daily.cron.sh
+services\ai\start.sh
+services\backend\start.sh
+```
+How to fix in VS Code:
+1) Open the file in VS Code.
+2) Look at the bottom-right corner of the editor → you’ll see CRLF.
+3) Click it, then select LF.
+4) Save the file.
 
 Then, you can build and start the docker through the readily avaiable npm scripts.
 
