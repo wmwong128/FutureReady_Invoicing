@@ -20,7 +20,7 @@ By following stages in the Cash Inflow Process, we built an **automated, easily-
 | Stage              | Feature                                             | Business Impact |
 |--------------------|-----------------------------------------------------|-----------------|
 | **1. Credit Approval** | Client creditworthiness checks using predefined thresholds | Reduce credit risk by preventing unreliable clients from receiving invoices |
-| **2. Invoice Creation** | Semi-automate Invoicing System | Accelerate billing cycles and minimize manual workload |
+| **2. Invoice Creation** | Semi-automate invoicing generation | Accelerate billing cycles and minimize manual workload |
 | **3. Invoice Sending** | Auto invoice emailing to clients | Ensure timely delivery and speed up billing cycles |
 | **4. Client Follow-Up** | Automated email follow-up reminders | Save time chasing payments and improve collection rates |
 | **5. Payment Processing** | Digital payment portal (Stripe) embedded in PDF invoices | Simplify transactions and encourage faster payments |
