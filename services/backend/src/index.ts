@@ -132,7 +132,7 @@ app.get('/', async (req, res) => {
         
         if (inv.invoicedate) {
           const date = new Date(inv.invoicedate);
-          const monthKey = date.toLocaleString("default", { month: "short" });
+          const monthKey = date.toLocaleString("en-US", { month: "short" });
           let monthEntry = revenueTrend.find((item) => item.month === monthKey);
 
           if (monthEntry) {
@@ -224,6 +224,7 @@ app.get('/invoice/:issueremail', async (req, res) => {
       const invObj = invoice.toObject() as any;
       invObj.client = customer.name; 
       invObj.riskscore = customer.riskscore;
+      invObj.clientemail = customer.email;
       invObj.risk = customer.dangerlevel;
       allInvoices.push(invObj);
     }
@@ -1063,9 +1064,9 @@ app.post("/invoice/:issueremail/:id/send", async (req, res) => {
     if (!dbInvoice) {
       return res.status(404).json({ error: "Invoice not found" });
     };
-    if (dbInvoice.issueremail != issueremail){
-      return res.status(500).json({ error: "Not your invoice" });
-    };
+    // if (dbInvoice.issueremail != issueremail){
+    //   return res.status(500).json({ error: "Not your invoice" });
+    // };
     if (!dbInvoice.stripeinvoiceid) {
       return res.status(400).json({ error: "No Stripe invoice ID found" });
     };

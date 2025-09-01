@@ -104,10 +104,10 @@ export function useUpdateInvoice(id?: string) {
     return { updateInvoice };
 }
 
-export function useSendInvoice(id?: string) {
-    const { user } = useAuth0()
+export function useSendInvoice(id?: string, clientemail?: string) {
+    const encodedEmail = encodeURIComponent(clientemail ?? "");
     const sendInvoice = useMachineMutation({
-        url: `${BASE_URL}/${user?.email}/${id}/send`,
+        url: `${BASE_URL}/${encodedEmail}/${id}/send`,
         method: "POST",
     });
 

@@ -34,12 +34,13 @@ export const InvoiceManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermDraft, setSearchTermDraft] = useState('');
   const [sendInvoiceId, setSendInvoiceId] = useState<string>('');
+  const [sendClientEmail, setSendClientEmail] = useState<string>('');
   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string>('');
   const navigate = useNavigate();
 
   const { stats, invoices, draftInvoices } = useInvoiceManagement();
   const { viewInvoicePDF } = useInvoiceStripeView();
-  const { sendInvoice } = useSendInvoice(sendInvoiceId);
+  const { sendInvoice } = useSendInvoice(sendInvoiceId, sendClientEmail);
   const { deleteInvoice } = useDeleteInvoice(deleteInvoiceId);
   const queryClient = useQueryClient();
 
@@ -109,8 +110,9 @@ export const InvoiceManagement = () => {
           .includes(searchTermDraft.toLowerCase())
     ) ?? [];
 
-  function handleInvoiceSend(id: string) {
+  function handleInvoiceSend(id: string, clientemail: string) {
     setSendInvoiceId(id);
+    setSendClientEmail(clientemail)
     sendInvoice.mutate(
       {},
       {
@@ -367,7 +369,7 @@ export const InvoiceManagement = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
@@ -382,7 +384,7 @@ export const InvoiceManagement = () => {
                           className="h-8 w-8"
                           disabled={isDisable}
                           onClick={() => handleInvoiceSend(invoice._id)}
-                        ></Button>
+                        ></Button> */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -397,7 +399,7 @@ export const InvoiceManagement = () => {
                           size="icon"
                           className="h-8 w-8"
                           disabled={isDisable}
-                          onClick={() => handleInvoiceSend(invoice._id)}
+                          onClick={() => handleInvoiceSend(invoice._id, invoice.clientemail ?? "")}
                         >
                           <Send className="h-4 w-4" />
                         </Button>

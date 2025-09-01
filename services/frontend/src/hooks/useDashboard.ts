@@ -21,7 +21,7 @@ export function useDashboard() {
     const forecast = data?.forecast?.forecast ?? []
     dates.forEach((dateStr, index) => {
         const date = new Date(dateStr);
-        const monthKey = date.toLocaleString("default", { month: "short" });
+        const monthKey = date.toLocaleString("en-US", { month: "short" });
         const existingIndex = temp.findIndex((item) => item.month === monthKey);
         const forecastValue = forecast[index] ?? 0;
 

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import { useEmail } from '@/hooks/useEmail';
 import { cn } from '@/lib/utils';
+import { useAuth0 } from '@auth0/auth0-react';
 import {
   Calendar,
   DollarSign,
@@ -34,7 +35,8 @@ import {
 import { useState } from 'react';
 
 export const MailManagement = () => {
-  const { data, stats } = useEmail('halo@gmail.com');
+  const { user } = useAuth0()
+  const { data, stats } = useEmail(user?.email);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [editedNotes, setEditedNotes] = useState('');
   const [currentPage, setCurrentPage] = useState(1);

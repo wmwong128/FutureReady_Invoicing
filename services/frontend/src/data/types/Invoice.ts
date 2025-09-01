@@ -9,6 +9,7 @@ export interface Invoice {
     invoicedate: string;
     duedate: string;
     client?: string;
+    clientemail?: string;
     riskscore?: number;
     risk?: string;
     taxrate?: number;
